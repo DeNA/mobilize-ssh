@@ -6,7 +6,7 @@ module Mobilize
 
     def Ssher.tmp_file_dir
       dir = "#{Base.root}/tmp/ssher/"
-      FileUtils.mkpath(tmp_file_folder)
+      FileUtils.mkpath(dir)
       return dir
     end
 
