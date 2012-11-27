@@ -1,0 +1,15 @@
+development:
+  nodes:
+    mobilize:
+      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
+      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
+test:
+  nodes:
+    mobilize:
+      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
+      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
+production:
+  nodes:
+    mobilize:
+      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
+      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
