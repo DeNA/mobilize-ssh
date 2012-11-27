@@ -1,15 +1,15 @@
 development:
   nodes:
     mobilize:
-      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
-      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
+      host: {name: dev-host.com, key: your_key.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+      gateway: {name: dev-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
 test:
   nodes:
     mobilize:
-      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
-      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
+      host: {name: test-host.com, key: mobilize.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+      gateway: {name: test-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
 production:
   nodes:
     mobilize:
-      host: {name: mobilize101.milp.ngmoco.com, key: mobilize.ssh, port: 22, user: deploy, dir: "/var/apps/mobilize/"}
-      gateway: {name: login.milp.ngmoco.com, key: "mobilize://config/mobilize.ssh", port: 50001, user: analyticsuser}
+      host: {name: prod-host.com, key: mobilize.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+      gateway: {name: prod-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}

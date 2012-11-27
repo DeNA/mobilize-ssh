@@ -17,4 +17,7 @@ Gem::Specification.new do |gem|
   gem.test_files    = gem.files.grep(%r{^(test|spec|features)/})
   gem.require_paths = ["lib"]
   gem.add_runtime_dependency "mobilize-base","1.0.1"
+  gem.add_runtime_dependency "net-ssh"
+  gem.add_runtime_dependency "net-ssh-gateway"
+
 end
