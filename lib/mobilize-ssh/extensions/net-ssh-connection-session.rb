@@ -1,7 +1,7 @@
 class Net::SSH::Connection::Session
-  def exec_w_err(command,except=true,errlog=nil)
+  def run(command,except=true,err_file=nil)
     result = ["",""]
-    f = File.open(errlog,"a") if errlog
+    f = File.open(err_file,"a") if err_file
     self.exec!(command) do |ch, stream, data|
       if stream == :stderr
         result[-1] += data

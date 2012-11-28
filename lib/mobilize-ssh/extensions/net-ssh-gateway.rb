@@ -1,6 +1,6 @@
 class Net::SSH::Gateway
-  def self.sh(gname,guser,name,user,command,gopts={},hopts={},except=true,err_log_path=nil)
-    f = File.open(err_log_path,"a") if err_log_path
+  def self.run(gname,guser,name,user,command,gopts={},opts={},except=true,err_file=nil)
+    f = File.open(err_file,"a") if err_file
     gateway = self.new(gname,guser,gopts)
     gateway.ssh(name,user,opts) do |ssh|
       result = ["",""]
@@ -25,7 +25,7 @@ class Net::SSH::Gateway
     end
   end
   def self.sync(gname,guser,name,user,from_path,to_path,gopts={},opts={})
-    gateway = self.new(ghost,guser,gopts)
+    gateway = self.new(gname,guser,gopts)
     gateway.scp(name,user,opts) do |scp|
       scp.upload!(from_path,to_path,:recursive=>true)
     end
