@@ -12,5 +12,5 @@ module Mobilize
   module Ssh
   end
 end
-require "mobilize-ssh/handlers/ssher"
+require "mobilize-ssh/handlers/ssh"
 

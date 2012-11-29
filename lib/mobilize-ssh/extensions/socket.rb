@@ -1,6 +1,10 @@
 class Socket
   def Socket.official_hostname
-    Socket.gethostbyname(Socket.gethostname).first
+    begin
+      Socket.gethostbyname(Socket.gethostname).first
+    rescue
+      Socket.gethostname
+    end
   end
 
   def Socket.domain_name

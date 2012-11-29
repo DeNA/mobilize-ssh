@@ -1,0 +1,11 @@
+- {name: test_ssh,
+   active: true,
+   schedule: once,
+   status: "",
+   last_error: "",
+   destination_url: "",
+   tasks: "ssh.run, gsheet.write",
+   datasets: "code.rb, code.sh",
+   params: '{"ssh_command":"ruby code.rb","node":"ssh_test"}',
+   destination: test_destination
+  }
