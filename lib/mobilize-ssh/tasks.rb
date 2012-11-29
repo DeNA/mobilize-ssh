@@ -1,8 +1,5 @@
-# require 'resque/tasks'
-# will give you the resque tasks
-
 namespace :mobilize do
-
+  #overrides the same task from mobilize-base
   desc "Start a Resque worker"
   task :work do
     require 'resque'
