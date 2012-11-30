@@ -21,7 +21,7 @@ module Mobilize
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
     def Ssh.needs_gateway?(node)
       host_domain_name = Ssh.host(node)['name'].split(".")[-2..-1].join(".")
-      return true if Ssh.gateway(node) and Socket.domain_name == host_domain_name
+      return true if Ssh.gateway(node) and Socket.domain_name != host_domain_name
     end
 
     def Ssh.pop_comm_dir(comm_dir,file_hash)

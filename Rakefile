@@ -1,6 +1,6 @@
 require "bundler/gem_tasks"
 
-#require mobilize-base tasks
+require 'mobilize-base/tasks'
 require 'mobilize-ssh/tasks'
 
 #
