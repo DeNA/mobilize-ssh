@@ -1,15 +1,15 @@
 development:
   nodes:
-    mobilize:
-      host: {name: dev-host.com, key: your_key.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+    dev_node:
+      host: {name: dev-host.com, key: your_key.ssh, port: 22, user: host_user}
       gateway: {name: dev-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
 test:
   nodes:
-    mobilize:
-      host: {name: test-host.com, key: mobilize.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+    test_node:
+      host: {name: test-host.com, key: mobilize.ssh, port: 22, user: host_user}
       gateway: {name: test-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
 production:
   nodes:
-    mobilize:
-      host: {name: prod-host.com, key: mobilize.ssh, port: 22, user: host_user, dir: "/folder/for/mobilize/"}
+    prod_node:
+      host: {name: prod-host.com, key: mobilize.ssh, port: 22, user: host_user}
       gateway: {name: prod-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}

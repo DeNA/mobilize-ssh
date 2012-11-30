@@ -41,18 +41,14 @@ describe "Mobilize" do
     test_job_rows = ::YAML.load_file("#{Mobilize::Base.root}/test/ssh_job_rows.yml")
     jobs_sheet.add_or_update_rows(test_job_rows)
 
-
-    test_job_rows = ::YAML.load_file("#{Mobilize::Base.root}/test/ssh_job_rows.yml")
-    jobs_sheet.add_or_update_rows(test_job_rows)
-
     puts "job row added, force enqueued requestor"
     requestor.enqueue!
     sleep 120
 
-    puts "jobtracker posted test sheet data to test destination, and checksum succeeded?"
+    puts "jobtracker posted data to test sheet"
     test_destination_sheet = Mobilize::Gsheet.find_or_create_by_name("#{jobspec_title}/test_destination",email)
 
-    assert test_destination_sheet.to_tsv == test_source_sheet.to_tsv
+    assert test_destination_sheet.to_tsv.length > 100
 
     puts "stop test redis"
     Mobilize::Jobtracker.stop_test_redis

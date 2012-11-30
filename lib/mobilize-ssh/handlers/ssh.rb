@@ -54,7 +54,7 @@ module Mobilize
     end
 
     def Ssh.run(node,command,file_hash=nil,except=true,su_user=nil,err_file=nil)
-      name,key,port,user,dir = Ssh.host(node).ie{|h| ['name','key','port','user','dir'].map{|k| h[k]}}
+      name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/config/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
       su_user ||= user
@@ -68,17 +68,14 @@ module Mobilize
       rem_dir = nil
       if File.exists?(comm_dir)
         #make sure user starts in rem_dir
-        rem_dir = "#{dir}#{comm_md5}/"
-        command = ["cd #{rem_dir}",command].join(";") if dir
+        rem_dir = "#{comm_md5}/"
+        command = ["cd #{rem_dir}",command].join(";")
         Ssh.scp(node,comm_dir,rem_dir)
         "rm -rf #{comm_dir}".bash
         if su_user
           chown_command = "sudo chown -R #{su_user} #{rem_dir}"
           Ssh.run(node,chown_command)
         end
-      else
-        #cd to dir if provided
-        command = ["cd #{dir}",command].join(";") if dir
       end
       if su_user != user
         #wrap the command in sudo su -c

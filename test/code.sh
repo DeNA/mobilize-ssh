@@ -1,1 +1,1 @@
-ls -lah /var/log | sed /^total/d
+tail /var/log/syslog
