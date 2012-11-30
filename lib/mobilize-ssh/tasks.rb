@@ -1,22 +1,3 @@
-namespace :mobilize do
-  #overrides the same task from mobilize-base
-  desc "Start a Resque worker"
-  task :work do
-    require 'resque'
-    require 'mobilize-ssh'
-
-    begin
-      worker = Resque::Worker.new(Mobilize::Resque.config['queue_name'])
-    rescue Resque::NoQueueError
-      abort "set QUEUE env var, e.g. $ QUEUE=critical,high rake resque:work"
-    end
-
-    puts "Starting worker #{worker}"
-
-    worker.work(ENV['INTERVAL'] || 5) # interval, will block
-  end
-end
-
 namespace :mobilize_ssh do
   desc "Set up config and log folders and files"
   task :setup do
