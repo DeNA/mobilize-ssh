@@ -82,7 +82,7 @@ Configure
 
 The Ssh configuration for a development environment consists of nodes,
 identified by aliases, such as `test_host`. This alias is what you should
-pass into the "node" param over in the Mobilize Jobspec.
+pass into the "node" param over in the Mobilize Runner.
 
 Each node has a host, and optionally has a gateway. If you don't need a
 gateway, remove that row from the configuration file.
@@ -138,7 +138,7 @@ You should also copy the ssh private key you wish to use into the config folder.
 
 3) $ rake test
 
-This will create a test Jobspec with a sample ssh job.
+This will create a test Runner with a sample ssh job.
 
 The purpose of the test will be to deploy two code files, have the first
 execute the second, which is a "tail /var/log/syslog" command, and write the resulting output to a google sheet.
