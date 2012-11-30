@@ -32,9 +32,9 @@ describe "Mobilize" do
     test_job_rows = ::YAML.load_file("#{Mobilize::Base.root}/test/ssh_job_rows.yml")
     jobs_sheet.add_or_update_rows(test_job_rows)
 
-    puts "job row added, force enqueued requestor"
+    puts "job row added, force enqueued requestor, wait 90s"
     requestor.enqueue!
-    sleep 120
+    sleep 90
 
     puts "jobtracker posted data to test sheet"
     test_destination_sheet = Mobilize::Gsheet.find_or_create_by_name("#{runner_title}/test_destination",email)

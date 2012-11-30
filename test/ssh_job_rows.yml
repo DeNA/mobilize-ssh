@@ -7,5 +7,5 @@
    tasks: "ssh.run, gsheet.write",
    datasets: "code.rb, code.sh",
    params: '{"ssh_command":"ruby code.rb","node":"test_node"}',
-   destination: test_destination
+   destination: test_destination_ssh
   }

@@ -124,21 +124,24 @@ Start
 
 To run tests, you will need to 
 
-1) clone the repository 
+1) go through the [mobilize-base][mobilize-base] test first
+
+2) clone the mobilize-ssh repository 
 
 From the project folder, run
 
-2) $ rake mobilize_base:setup; rake mobilize_ssh:setup
+3) $ rake mobilize_ssh:setup
 
-and populate the "test" environment in the config files with the
-necessary details, including values for "test_host" under the test
-environment.
+Copy over the config files from the mobilize-base project into the
+config folder, and populate the values in the ssh.yml file, esp. the
+test_host item.
 
-You should also copy the ssh private key you wish to use into the config folder.
+You should also copy the ssh private key you wish to use into the config
+folder, and make sure it is referenced in ssh.yml
 
 3) $ rake test
 
-This will create a test Runner with a sample ssh job.
+This will populate your test Runner from mobilize-base with a sample ssh job.
 
 The purpose of the test will be to deploy two code files, have the first
 execute the second, which is a "tail /var/log/syslog" command, and write the resulting output to a google sheet.
