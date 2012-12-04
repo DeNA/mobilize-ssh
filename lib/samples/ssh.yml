@@ -1,15 +1,18 @@
 development:
+  tmp_file_dir: "tmp/file/"
   nodes:
     dev_node:
-      host: {name: dev-host.com, key: "config/mobilize/mobilize.ssh", port: 22, user: host_user}
-      gateway: {name: dev-gateway.com, key: "config/mobilize/mobilize.ssh", port: 22, user: gateway_user}
+      host: {name: dev-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: dev-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
 test:
+  tmp_file_dir: "tmp/file/"
   nodes:
     test_node:
-      host: {name: test-host.com, key: "config/mobilize/mobilize.ssh", port: 22, user: host_user}
-      gateway: {name: test-gateway.com, key: "config/mobilize/mobilize.ssh", port: 22, user: gateway_user}
+      host: {name: test-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: test-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
 production:
+  tmp_file_dir: "tmp/file/"
   nodes:
     prod_node:
-      host: {name: prod-host.com, key: "config/mobilize/mobilize.ssh", port: 22, user: host_user}
-      gateway: {name: prod-gateway.com, key: "config/mobilize/mobilize.ssh", port: 22, user: gateway_user}
+      host: {name: prod-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: prod-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}

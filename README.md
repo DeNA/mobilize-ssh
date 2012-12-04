@@ -10,7 +10,7 @@ Table Of Contents
 * [Overview](#section_Overview)
 * [Install](#section_Install)
   * [Mobilize-Ssh](#section_Install_Mobilize-Ssh)
-  * [Default Folders and Files](#section_Install_Folders_and_Files)
+  * [Install Dirs and Files](#section_Install_Dirs_and_Files)
 * [Configure](#section_Configure)
   * [Ssh](#section_Configure_Ssh)
 * [Start](#section_Start)
@@ -47,31 +47,27 @@ or do
 
 for a ruby-wide install.
 
-<a name='section_Install_Folders_and_Files'></a>
-### Folders and Files
+<a name='section_Install_Dirs_and_Files'></a>
+### Dirs and Files
 
 ### Rakefile
 
-Inside the Rakefile in your project's root folder, make sure you have:
+Inside the Rakefile in your project's root dir, make sure you have:
 
 ``` ruby
-require 'mobilize-base/tasks'
-require 'mobilize-ssh/tasks'
+require 'mobilize-base/rakes'
+require 'mobilize-ssh/rakes'
 ```
 
-This defines tasks essential to run the environment.
+This defines rake tasks essential to run the environment.
 
-### Config Folder
+### Config Dir
 
 run 
 
   $ rake mobilize_ssh:setup
 
-This will copy over a sample ssh.yml to your config folder.
-
-You should also copy over at least one ssh private key into the config
-folder, which will be referenced in the ssh config as used to log onto
-the different servers.
+This will copy over a sample ssh.yml to your config dir.
 
 <a name='section_Configure'></a>
 Configure
@@ -80,16 +76,20 @@ Configure
 <a name='section_Configure_Ssh'></a>
 ### Configure Ssh
 
-The Ssh configuration for a development environment consists of nodes,
-identified by aliases, such as `test_host`. This alias is what you should
-pass into the "node" param over in the Mobilize Runner.
+The Ssh configuration consists of:
+* tmp_file_dir, which is where files will be stored before being scp'd
+over to the nodes. They will be deleted afterwards, unless the job
+fails in mid-copy. By default this is tmp/file/.
+* nodes, identified by aliases, such as `test_node`. This alias is what you should
+pass into the "node_alias" param over in the ssh.run task.
 
 Each node has a host, and optionally has a gateway. If you don't need a
 gateway, remove that row from the configuration file.
 
 Each host and gateway has a series of ssh params:
 * name - the ip address or name of the host
-* key - the name of the ssh key file in your config folder
+* key - the relative path of the ssh key file. Default is
+"config/mobilize/ssh_private.key"
 * port - the port to connect on
 * user - the user you are connecting as
 
@@ -98,26 +98,37 @@ Sample ssh.yml:
 ``` yml
 
 development:
+  tmp_file_dir: "tmp/file/"
   nodes:
-    dev_host:
-      host: {name: dev-host.com, key: your_key.ssh, port: 22, user: host_user}
-      gateway: {name: dev-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
+    dev_node:
+      host: {name: dev-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: dev-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
 test:
+  tmp_file_dir: "tmp/file/"
   nodes:
-    test_host:
-      host: {name: test-host.com, key: mobilize.ssh, port: 22, user: host_user}
-      gateway: {name: test-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
+    test_node:
+      host: {name: test-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: test-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
 production:
+  tmp_file_dir: "tmp/file/"
   nodes:
-    prod_host:
-      host: {name: prod-host.com, key: mobilize.ssh, port: 22, user: host_user}
-      gateway: {name: prod-gateway.com, key: your_key.ssh, port: 22, user: gateway_user}
-
+    prod_node:
+      host: {name: prod-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
+      gateway: {name: prod-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
 ```
 
 <a name='section_Start'></a>
 Start
 -----
+
+<a name='section_Start_Create_Job'></a>
+### Create Job
+
+* For mobilize-ssh, the following task is available:
+  * ssh.run `<node_alias>,<command>,*<gsheet_full_paths>`, which reads
+all gsheets, copies them to a temporary folder on the selected node, and
+runs the command inside that folder. 
+  * The test uses `ssh.run "test_node", "ruby code.rb", "Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"`
 
 <a name='section_Start_Run_Test'></a>
 ### Run Test
@@ -133,18 +144,18 @@ From the project folder, run
 3) $ rake mobilize_ssh:setup
 
 Copy over the config files from the mobilize-base project into the
-config folder, and populate the values in the ssh.yml file, esp. the
-test_host item.
+config dir, and populate the values in the ssh.yml file, esp. the
+test_node item.
 
-You should also copy the ssh private key you wish to use into the config
-folder, and make sure it is referenced in ssh.yml
+You should also copy the ssh private key you wish to use into your
+desired path (by default: config/mobilize/ssh_private.key), and make sure it is referenced in ssh.yml
 
 3) $ rake test
 
 This will populate your test Runner from mobilize-base with a sample ssh job.
 
 The purpose of the test will be to deploy two code files, have the first
-execute the second, which is a "tail /var/log/syslog" command, and write the resulting output to a google sheet.
+execute the second, which is a "tail /var/log/syslog" command, and write the resulting output to a gsheet.
 
 <a name='section_Meta'></a>
 Meta

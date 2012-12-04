@@ -14,7 +14,8 @@ describe "Mobilize" do
 
     gdrive_slot = Mobilize::Gdrive.owner_email
     puts "create user 'mobilize'"
-    u = Mobilize::User.where(:email=>gdrive_slot).first
+    user_name = gdrive_slot.split("@").first
+    u = Mobilize::User.where(:name=>user_name).first
     r = u.runner
 
     puts "add test code"
@@ -34,6 +35,9 @@ describe "Mobilize" do
     puts "job row added, force enqueued runner, wait 90s"
     r.enqueue!
     sleep 90
+
+    puts "update job status and activity"
+    r.update_gsheet(gdrive_slot)
 
     puts "jobtracker posted data to test sheet"
     ssh_target_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh.out",gdrive_slot)
