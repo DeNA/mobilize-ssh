@@ -9,7 +9,7 @@ Gem::Specification.new do |gem|
   gem.authors       = ["Cassio Paes-Leme"]
   gem.email         = ["cpaesleme@ngmoco.com"]
   gem.description   = %q{mobilize-ssh allows you to automate ssh commands and files across hosts}
-  gem.summary       = %q{extend mobilize-base with the ability read and write files across hosts}
+  gem.summary       = %q{extend mobilize-base with the ability to run files across hosts}
   gem.homepage      = ""
 
   gem.files         = `git ls-files`.split($/)

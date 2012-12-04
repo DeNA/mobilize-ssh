@@ -17,7 +17,7 @@ describe "Mobilize" do
     u = Mobilize::User.where(:email=>gdrive_slot).first
     r = u.runner
 
-    puts "add test_source data"
+    puts "add test code"
     rb_code_sheet = Mobilize::Gsheet.find_or_create_by_path("#{r.path.split("/")[0..-2].join("/")}/code.rb",gdrive_slot)
     rb_code_tsv = File.open("#{Mobilize::Base.root}/test/code.rb").read
     rb_code_sheet.write(rb_code_tsv)
@@ -36,7 +36,7 @@ describe "Mobilize" do
     sleep 90
 
     puts "jobtracker posted data to test sheet"
-    ssh_target_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.sh",gdrive_slot)
+    ssh_target_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh.out",gdrive_slot)
 
     assert ssh_target_sheet.to_tsv.length > 100
   end

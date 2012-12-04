@@ -5,9 +5,7 @@ module Mobilize
     end
 
     def Ssh.tmp_file_dir
-      dir = "#{Base.root}/tmp/ssh/"
-      "mkdir -p #{dir}".bash
-      return dir
+      Ssh.config['tmp_file_dir']
     end
 
     def Ssh.host(node)
@@ -38,11 +36,11 @@ module Mobilize
 
     def Ssh.scp(node,from_path,to_path)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-      key_path = "#{Base.root}/config/#{key}"
+      key_path = "#{Base.root}/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
       if Ssh.needs_gateway?(node)
         gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-        gkey_path = "#{Base.root}/config/#{gkey}"
+        gkey_path = "#{Base.root}/#{gkey}"
         gopts = {:port=>(gport || 22),:keys=>gkey_path}
         return Net::SSH::Gateway.sync(gname,guser,name,user,from_path,to_path,gopts,opts)
       else
@@ -55,7 +53,7 @@ module Mobilize
 
     def Ssh.run(node,command,file_hash=nil,except=true,su_user=nil,err_file=nil)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-      key_path = "#{Base.root}/config/#{key}"
+      key_path = "#{Base.root}/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
       su_user ||= user
       file_hash ||= {}
@@ -85,7 +83,7 @@ module Mobilize
       #one with gateway, one without
       if Ssh.needs_gateway?(node)
          gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-         gkey_path = "#{Base.root}/config/#{gkey}"
+         gkey_path = "#{Base.root}/#{gkey}"
          gopts = {:port=>(gport || 22),:keys=>gkey_path}
          result = Net::SSH::Gateway.run(gname,guser,name,user,command,gopts,opts,except,err_file)
       else
@@ -133,7 +131,7 @@ module Mobilize
         fname = gpath.split("/").last
         {fname => string}
       end.each do |f|
-        file_hash.merge(f)
+        file_hash = f.merge(file_hash)
       end
       file_hash
     end
