@@ -1,11 +1,6 @@
-- {name: test_ssh,
-   active: true,
-   schedule: once,
-   status: "",
-   last_error: "",
-   destination_url: "",
-   tasks: "ssh.run, gsheet.write",
-   datasets: "code.rb, code.sh",
-   params: '{"ssh_command":"ruby code.rb","node":"test_node"}',
-   destination: test_destination_ssh
-  }
+- name: test_ssh
+  active: true
+  trigger: once
+  status: ""
+  task1: 'ssh.run "test_node", "ruby code.rb", "Runner - mobilize(test)/code.rb", "Runner - mobilize(test)/code.sh"'
+  task2: 'gsheet.write "task1", "Runner - mobilize(test)/test_ssh.out"'

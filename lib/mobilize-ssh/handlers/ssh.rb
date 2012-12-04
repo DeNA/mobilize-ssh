@@ -1,7 +1,7 @@
 module Mobilize
   module Ssh
     def Ssh.config
-      Base.config('ssh')[Base.env]
+      Base.config('ssh')
     end
 
     def Ssh.tmp_file_dir
@@ -126,17 +126,28 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.run_by_job_id(job_id)
-      j = Job.find(job_id)
-      param_hash = JSON.parse(j.params)
-      command = param_hash['ssh_command']
-      node = param_hash['node']
-      su_user = param_hash['su_user']
+    def Ssh.get_file_hash(gsheet_paths,gdrive_slot)
       file_hash = {}
-      j.dataset_array.each do |dst|
-        file_hash[dst.name.split('/').last]=dst.read
+      gsheet_paths.map do |gpath|
+        string = Gsheet.find_by_path(gpath,gdrive_slot).to_tsv
+        fname = gpath.split("/").last
+        {fname => string}
+      end.each do |f|
+        file_hash.merge(f)
       end
-      Ssh.run(node,command,file_hash,su_user)
+      file_hash
+    end
+
+    def Ssh.run_by_task_path(task_path)
+      t = Task.where(:path=>task_path).first
+      params = t.params
+      node, command = [params[0],params[1]]
+      file_hash = if params[2]
+                    gsheet_paths = params[2..-1] if params[2]
+                    gdrive_slot = Gdrive.slot_worker_by_path(task_path)
+                    Ssh.get_file_hash(gsheet_paths,gdrive_slot)
+                  end
+      Ssh.run(node,command,file_hash)
     end
   end
 end
