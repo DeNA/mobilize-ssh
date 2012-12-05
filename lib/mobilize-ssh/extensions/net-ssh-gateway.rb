@@ -1,27 +1,17 @@
 class Net::SSH::Gateway
-  def self.run(gname,guser,name,user,command,gopts={},opts={},except=true,err_file=nil)
-    f = File.open(err_file,"a") if err_file
+  def self.run(gname,guser,name,user,command,gopts={},opts={})
     gateway = self.new(gname,guser,gopts)
     gateway.ssh(name,user,opts) do |ssh|
-      result = ["",""]
+      stderr,stdout = ["",""]
       ssh.exec!(command) do |ch, stream, data|
         if stream == :stderr
-          result[-1] += data
-          f.print(data) if f
+          stderr += data
         else
-          result[0] += data
+          stdout += data
         end
       end
-      f.close if f
-      if result.last.length>0
-        if except
-          raise result.last
-        else
-          return result
-        end
-      else
-        return result.first
-      end
+      raise stderr if stderr.length>0
+      return stdout
     end
   end
   def self.sync(gname,guser,name,user,from_path,to_path,gopts={},opts={})

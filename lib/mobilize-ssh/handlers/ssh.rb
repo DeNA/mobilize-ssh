@@ -51,7 +51,7 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,file_hash=nil,except=true,su_user=nil,err_file=nil)
+    def Ssh.run(node,command,file_hash=nil,su_user=nil)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
@@ -85,10 +85,10 @@ module Mobilize
          gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
          gkey_path = "#{Base.root}/#{gkey}"
          gopts = {:port=>(gport || 22),:keys=>gkey_path}
-         result = Net::SSH::Gateway.run(gname,guser,name,user,command,gopts,opts,except,err_file)
+         result = Net::SSH::Gateway.run(gname,guser,name,user,command,gopts,opts)
       else
          Net::SSH.start(name,user,opts) do |ssh|
-           result = ssh.run(command,except,err_file)
+           result = ssh.run(command)
          end
       end
       #delete remote dir if necessary

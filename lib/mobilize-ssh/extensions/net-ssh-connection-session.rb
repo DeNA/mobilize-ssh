@@ -1,24 +1,14 @@
 class Net::SSH::Connection::Session
-  def run(command,except=true,err_file=nil)
-    result = ["",""]
-    f = File.open(err_file,"a") if err_file
+  def run(command)
+    stdout,stderr = ["",""]
     self.exec!(command) do |ch, stream, data|
       if stream == :stderr
-        result[-1] += data
-        f.print(data) if f
+        stderr += data
       else
-        result[0] += data
+        stdout += data
       end
     end
-    f.close if f
-    if result.last.length>0
-      if except
-        raise result.last
-      else
-        return result
-      end
-    else
-      return result.first
-    end
+    raise stderr if stderr.length>0
+    return stdout
   end
 end
