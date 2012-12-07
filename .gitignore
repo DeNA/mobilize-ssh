@@ -17,4 +17,5 @@ test/version_tmp
 tmp
 config/
 log/
+log
 config
