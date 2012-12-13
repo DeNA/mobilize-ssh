@@ -68,6 +68,8 @@ module Mobilize
         #make sure user starts in rem_dir
         rem_dir = "#{comm_md5}/"
         command = ["cd #{rem_dir}",command].join(";")
+        #make sure the rem_dir is gone
+        Ssh.run(node,"rm -rf #{rem_dir}")
         Ssh.scp(node,comm_dir,rem_dir)
         "rm -rf #{comm_dir}".bash
         if su_user
