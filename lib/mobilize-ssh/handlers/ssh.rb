@@ -141,11 +141,10 @@ module Mobilize
     def Ssh.run_by_task_path(task_path)
       t = Task.where(:path=>task_path).first
       params = t.params
-      node, command = [params[0],params[1]]
-      file_hash = if params[2]
-                    gsheet_paths = params[2..-1] if params[2]
+      node, command = [params['node'],params['cmd']]
+      file_hash = if params['sources']
                     gdrive_slot = Gdrive.slot_worker_by_path(task_path)
-                    Ssh.get_file_hash(gsheet_paths,gdrive_slot)
+                    Ssh.get_file_hash(params['sources'],gdrive_slot)
                   end
       Ssh.run(node,command,file_hash)
     end
