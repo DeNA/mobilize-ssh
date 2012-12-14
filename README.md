@@ -81,7 +81,7 @@ The Ssh configuration consists of:
 over to the nodes. They will be deleted afterwards, unless the job
 fails in mid-copy. By default this is tmp/file/.
 * nodes, identified by aliases, such as `test_node`. This alias is what you should
-pass into the "node_alias" param over in the ssh.run task.
+pass into the "node" param over in the ssh.run task.
 
 Each node has a host, and optionally has a gateway. If you don't need a
 gateway, remove that row from the configuration file.
@@ -128,7 +128,7 @@ Start
   * ssh.run `<node_alias>,<command>,*<gsheet_full_paths>`, which reads
 all gsheets, copies them to a temporary folder on the selected node, and
 runs the command inside that folder. 
-  * The test uses `ssh.run "test_node", "ruby code.rb", "Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"`
+  * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb",sources:["Runner_mobilize(test)/code.rb","Runner_mobilize(test)/code.sh"]`
 
 <a name='section_Start_Run_Test'></a>
 ### Run Test
