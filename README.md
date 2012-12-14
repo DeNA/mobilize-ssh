@@ -125,9 +125,11 @@ Start
 ### Create Job
 
 * For mobilize-ssh, the following task is available:
-  * ssh.run `<node_alias>,<command>,*<gsheet_full_paths>`, which reads
+  * ssh.run `node: <node_alias>, cmd: <command>, su_user: su_user, sources:[*<gsheet_full_paths>]`, which reads
 all gsheets, copies them to a temporary folder on the selected node, and
 runs the command inside that folder. 
+  * su_user and sources are optional; node and cmd are required. su_user
+will cause the command to be prefixed with sudo su <su_user> -c.
   * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb",sources:["Runner_mobilize(test)/code.rb","Runner_mobilize(test)/code.sh"]`
 
 <a name='section_Start_Run_Test'></a>

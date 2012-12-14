@@ -2,5 +2,5 @@
   active: true
   trigger: once
   status: ""
-  task1: 'ssh.run node:"test_node", cmd:"ruby code.rb", sources:["Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"]'
+  task1: 'ssh.run node:"test_node", cmd:"ruby code.rb", su_user:"root", sources:["Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"]'
   task2: 'gsheet.write source:"task1", target:"Runner_mobilize(test)/test_ssh.out"'
