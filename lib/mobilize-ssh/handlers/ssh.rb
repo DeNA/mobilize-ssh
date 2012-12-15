@@ -136,7 +136,7 @@ module Mobilize
                      elsif params['source']
                        [params['source']]
                      end
-      if gsheet_paths.length>0
+      if gsheet_paths and gsheet_paths.length>0
         gdrive_slot = Gdrive.slot_worker_by_path(task_path)
         file_hash = {}
         gsheet_paths.map do |gpath|
