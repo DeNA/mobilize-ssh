@@ -40,7 +40,7 @@ describe "Mobilize" do
     [ssh_target_sheet_1,ssh_target_sheet_2,ssh_target_sheet_3].each {|s| s.delete if s}
 
     ssh_job_rows = ::YAML.load_file("#{Mobilize::Base.root}/test/ssh_job_rows.yml")
-    ssh_job_rows.map{|j| r.jobs(j['name'])}.each{|j| j.delete}
+    ssh_job_rows.map{|j| r.jobs(j['name'])}.each{|j| j.delete if j}
     jobs_sheet.add_or_update_rows(ssh_job_rows)
 
     puts "job row added, force enqueued runner, wait 120s"
