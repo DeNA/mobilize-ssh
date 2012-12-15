@@ -144,7 +144,9 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       file_hash = if params['sources']
                     gdrive_slot = Gdrive.slot_worker_by_path(task_path)
-                    Ssh.get_file_hash(params['sources'],gdrive_slot)
+                    result = Ssh.get_file_hash(params['sources'],gdrive_slot)
+                    Gdrive.unslot_worker_by_path(task_path)
+                    result
                   end
       su_user = t.params['su_user']
       Ssh.run(node,command,file_hash,su_user)
