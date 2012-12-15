@@ -1,6 +1,12 @@
-- name: test_ssh
+- name: test_ssh_1
   active: true
   trigger: once
   status: ""
   task1: 'ssh.run node:"test_node", cmd:"ruby code.rb", su_user:"root", sources:["Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"]'
-  task2: 'gsheet.write source:"task1", target:"Runner_mobilize(test)/test_ssh.out"'
+  task2: 'gsheet.write source:"task1", target:"Runner_mobilize(test)/test_ssh_1.out"'
+- name: test_ssh_2
+  active: true
+  trigger: once
+  status: ""
+  task1: 'ssh.run node:"test_node", cmd:"sh code.sh", su_user:"root", source:"Runner_mobilize(test)/code.sh"'
+  task2: 'gsheet.write source:"task1", target:"Runner_mobilize(test)/test_ssh_2.out"'

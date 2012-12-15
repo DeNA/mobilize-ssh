@@ -126,28 +126,36 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.get_file_hash(gsheet_paths,gdrive_slot)
-      file_hash = {}
-      gsheet_paths.map do |gpath|
-        string = Gsheet.find_by_path(gpath,gdrive_slot).to_tsv
-        fname = gpath.split("/").last
-        {fname => string}
-      end.each do |f|
-        file_hash = f.merge(file_hash)
+    def Ssh.file_hash_by_task_path(task_path)
+      #this is not meant to be called directly
+      #from the Runner -- it's used by run_by_task_path
+      t = Task.where(:path=>task_path).first
+      params = t.params
+      gsheet_paths = if params['sources']
+                       params['sources']
+                     elsif params['source']
+                       [params['source']]
+                     end
+      if gsheet_paths.length>0
+        gdrive_slot = Gdrive.slot_worker_by_path(task_path)
+        file_hash = {}
+        gsheet_paths.map do |gpath|
+          string = Gsheet.find_by_path(gpath,gdrive_slot).to_tsv
+          fname = gpath.split("/").last
+          {fname => string}
+        end.each do |f|
+          file_hash = f.merge(file_hash)
+        end
+        Gdrive.unslot_worker_by_path(task_path)
+        return file_hash
       end
-      file_hash
     end
 
     def Ssh.run_by_task_path(task_path)
       t = Task.where(:path=>task_path).first
       params = t.params
       node, command = [params['node'],params['cmd']]
-      file_hash = if params['sources']
-                    gdrive_slot = Gdrive.slot_worker_by_path(task_path)
-                    result = Ssh.get_file_hash(params['sources'],gdrive_slot)
-                    Gdrive.unslot_worker_by_path(task_path)
-                    result
-                  end
+      file_hash = Ssh.file_hash_by_task_path(task_path)
       su_user = t.params['su_user']
       Ssh.run(node,command,file_hash,su_user)
     end

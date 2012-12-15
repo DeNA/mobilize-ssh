@@ -40,9 +40,12 @@ describe "Mobilize" do
     r.update_gsheet(gdrive_slot)
 
     puts "jobtracker posted data to test sheet"
-    ssh_target_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh.out",gdrive_slot)
+    ssh_target_sheet_1 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_1.out",gdrive_slot)
+    ssh_target_sheet_2 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_2.out",gdrive_slot)
 
-    assert ssh_target_sheet.to_tsv.length > 100
+    assert ssh_target_sheet_1.to_tsv.length > 100
+    assert ssh_target_sheet_2.to_tsv.length > 100
+
   end
 
 end
