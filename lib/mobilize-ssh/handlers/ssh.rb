@@ -126,18 +126,18 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.file_hash_by_task_path(task_path)
+    def Ssh.file_hash_by_stage_path(stage_path)
       #this is not meant to be called directly
-      #from the Runner -- it's used by run_by_task_path
-      t = Task.where(:path=>task_path).first
-      params = t.params
+      #from the Runner -- it's used by run_by_stage_path
+      s = Stage.where(:path=>stage_path).first
+      params = s.params
       gsheet_paths = if params['sources']
                        params['sources']
                      elsif params['source']
                        [params['source']]
                      end
       if gsheet_paths and gsheet_paths.length>0
-        gdrive_slot = Gdrive.slot_worker_by_path(task_path)
+        gdrive_slot = Gdrive.slot_worker_by_path(stage_path)
         file_hash = {}
         gsheet_paths.map do |gpath|
           string = Gsheet.find_by_path(gpath,gdrive_slot).to_tsv
@@ -146,17 +146,17 @@ module Mobilize
         end.each do |f|
           file_hash = f.merge(file_hash)
         end
-        Gdrive.unslot_worker_by_path(task_path)
+        Gdrive.unslot_worker_by_path(stage_path)
         return file_hash
       end
     end
 
-    def Ssh.run_by_task_path(task_path)
-      t = Task.where(:path=>task_path).first
-      params = t.params
+    def Ssh.run_by_stage_path(stage_path)
+      s = Stage.where(:path=>stage_path).first
+      params = s.params
       node, command = [params['node'],params['cmd']]
-      file_hash = Ssh.file_hash_by_task_path(task_path)
-      su_user = t.params['su_user']
+      file_hash = Ssh.file_hash_by_stage_path(stage_path)
+      su_user = s.params['su_user']
       Ssh.run(node,command,file_hash,su_user)
     end
   end
