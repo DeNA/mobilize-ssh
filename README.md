@@ -76,6 +76,10 @@ Configure
 <a name='section_Configure_Ssh'></a>
 ### Configure Ssh
 
+* Please note -- ssh currently requires passwordless sudo on every host
+machine where commands will be executed. It needs this to run queries on
+behalf of other users on that machine.
+
 The Ssh configuration consists of:
 * tmp_file_dir, which is where files will be stored before being scp'd
 over to the nodes. They will be deleted afterwards, unless the job
