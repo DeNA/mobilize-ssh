@@ -34,9 +34,17 @@ module Mobilize
       return true if file_hash.keys.length>0
     end
 
+    def Ssh.set_key_permissions(key_path)
+      #makes sure permissions are set as appropriate for ssh key
+      "chmod a-rwx #{key_path}".bash
+      "chmod u+rw #{key_path}".bash
+      return true
+    end
+
     def Ssh.scp(node,from_path,to_path)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
+      Ssh.set_key_permissions(key_path)
       opts = {:port=>(port || 22),:keys=>key_path}
       if Ssh.needs_gateway?(node)
         gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
@@ -54,6 +62,7 @@ module Mobilize
     def Ssh.run(node,command,file_hash=nil,su_user=nil)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
+      Ssh.set_key_permissions(key_path)
       opts = {:port=>(port || 22),:keys=>key_path}
       su_user ||= user
       file_hash ||= {}
@@ -94,13 +103,7 @@ module Mobilize
          end
       end
       #delete remote dir if necessary
-      if rem_dir
-        del_cmd = "rm -rf #{rem_dir}"
-        if su_user
-          del_cmd = %{sudo su #{su_user} -c "#{del_cmd}"}
-        end
-        Ssh.run(node,del_cmd)
-      end
+      Ssh.run(node,"rm -rf #{rem_dir}") if rem_dir
       result
     end
 
