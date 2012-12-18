@@ -103,7 +103,7 @@ module Mobilize
          end
       end
       #delete remote dir if necessary
-      Ssh.run(node,"rm -rf #{rem_dir}") if rem_dir
+      Ssh.run(node,"sudo rm -rf #{rem_dir}") if rem_dir
       result
     end
 
