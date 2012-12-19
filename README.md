@@ -76,10 +76,6 @@ Configure
 <a name='section_Configure_Ssh'></a>
 ### Configure Ssh
 
-* Please note -- ssh currently requires passwordless sudo on every host
-machine where commands will be executed. It needs this to run queries on
-behalf of other users on that machine.
-
 The Ssh configuration consists of:
 * tmp_file_dir, which is where files will be stored before being scp'd
 over to the nodes. They will be deleted afterwards, unless the job
@@ -87,8 +83,16 @@ fails in mid-copy. By default this is tmp/file/.
 * nodes, identified by aliases, such as `test_node`. This alias is what you should
 pass into the "node" param over in the ssh.run task.
 
-Each node has a host, and optionally has a gateway. If you don't need a
-gateway, remove that row from the configuration file.
+Each node has: 
+* a host;
+* a gateway (optional); If you don't need a gateway, remove that row from the configuration file.
+* sudoers; these are user names that are allowed to pass su_user params
+to the run call. This requires passwordless sudo for the host user.
+* su_all_users true/false option, which ensures that commands are executed by the
+user on the Runner. It prefixes all commands with sudo su <user_name> before executing the
+command. This is strongly recommended if possible as it ensures users do
+not overstep their permissions. This requires passwordless sudo for the
+host user and accounts on the host machine for each user.
 
 Each host and gateway has a series of ssh params:
 * name - the ip address or name of the host

@@ -16,6 +16,14 @@ module Mobilize
       Ssh.config['nodes'][node]['gateway']
     end
 
+    def Ssh.sudoers(node)
+      Ssh.config['nodes'][node]['sudoers']
+    end
+
+    def Ssh.su_all_users(node)
+      Ssh.config['nodes'][node]['su_all_users']
+    end
+
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
     def Ssh.needs_gateway?(node)
       host_domain_name = Ssh.host(node)['name'].split(".")[-2..-1].join(".")
@@ -60,10 +68,9 @@ module Mobilize
     end
 
     def Ssh.run(node,command,file_hash=nil,su_user=nil)
-      name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
+      key,user = Ssh.host(node).ie{|h| ['key','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
       Ssh.set_key_permissions(key_path)
-      opts = {:port=>(port || 22),:keys=>key_path}
       su_user ||= user
       file_hash ||= {}
       #make sure the dir for this command is clear
@@ -73,42 +80,55 @@ module Mobilize
       Ssh.pop_comm_dir(comm_dir,file_hash)
       #move any files up to the node
       rem_dir = nil
+      #make sure user starts in rem_dir
+      rem_dir = "#{comm_md5}/"
+      #make sure the rem_dir is gone
+      Ssh.fire!(node,"rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
-        #make sure user starts in rem_dir
-        rem_dir = "#{comm_md5}/"
-        command = ["cd #{rem_dir}",command].join(";")
-        #make sure the rem_dir is gone
-        Ssh.run(node,"rm -rf #{rem_dir}")
         Ssh.scp(node,comm_dir,rem_dir)
         "rm -rf #{comm_dir}".bash
-        if su_user
-          chown_command = "sudo chown -R #{su_user} #{rem_dir}"
-          Ssh.run(node,chown_command)
-        end
-      end
-      if su_user != user
-        #wrap the command in sudo su -c
-        command = %{sudo su #{su_user} -c "#{command}"}
-      end
-      result = nil
-      #one with gateway, one without
-      if Ssh.needs_gateway?(node)
-         gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-         gkey_path = "#{Base.root}/#{gkey}"
-         gopts = {:port=>(gport || 22),:keys=>gkey_path}
-         result = Net::SSH::Gateway.run(gname,guser,name,user,command,gopts,opts)
       else
-         Net::SSH.start(name,user,opts) do |ssh|
-           result = ssh.run(command)
-         end
+        #create folder
+        mkdir_command = "mkdir #{rem_dir}"
+        Ssh.fire!(node,mkdir_command)
       end
-      #delete remote dir if necessary
-      Ssh.run(node,"sudo rm -rf #{rem_dir}") if rem_dir
+      #create cmd_file in rem_folder
+      cmd_file = "#{comm_md5}.sh"
+      cmd_path = "#{rem_dir}#{cmd_file}"
+      Ssh.write(node,command,cmd_path)
+      full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
+      #fire_cmd runs sh on cmd_path, optionally with sudo su
+      fire_cmd = if su_user != user
+                   %{sudo su #{su_user} -c "#{full_cmd}"}
+                 else
+                   full_cmd
+                 end
+      result = Ssh.fire!(node,fire_cmd)
+      #remove the directory after you're done
+      rm_cmd = "rm -rf #{rem_dir}"
+      Ssh.fire!(node,rm_cmd)
       result
     end
 
+    def Ssh.fire!(node,cmd)
+      name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
+      key_path = "#{Base.root}/#{key}"
+      Ssh.set_key_permissions(key_path)
+      opts = {:port=>(port || 22),:keys=>key_path}
+      if Ssh.needs_gateway?(node)
+        gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
+        gkey_path = "#{Base.root}/#{gkey}"
+        gopts = {:port=>(gport || 22),:keys=>gkey_path}
+        Net::SSH::Gateway.run(gname,guser,name,user,cmd,gopts,opts)
+      else
+        Net::SSH.start(name,user,opts) do |ssh|
+          ssh.run(cmd)
+        end
+      end
+    end
+
     def Ssh.read(node,path)
-      Ssh.run(node,"cat #{path}")
+      Ssh.fire!(node,"cat #{path}")
     end
 
     def Ssh.write(node,fdata,to_path,binary=false)
@@ -156,10 +176,16 @@ module Mobilize
 
     def Ssh.run_by_stage_path(stage_path)
       s = Stage.where(:path=>stage_path).first
+      u = s.job.runner.user
       params = s.params
       node, command = [params['node'],params['cmd']]
       file_hash = Ssh.file_hash_by_stage_path(stage_path)
       su_user = s.params['su_user']
+      if su_user and !Ssh.sudoers(node).include?(u.name)
+        raise "You do not have su permissions for this node"
+      elsif su_user.nil? and Ssh.su_all_users(node)
+        su_user = u.name
+      end
       Ssh.run(node,command,file_hash,su_user)
     end
   end
