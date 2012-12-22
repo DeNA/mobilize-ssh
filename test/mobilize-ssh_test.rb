@@ -43,9 +43,9 @@ describe "Mobilize" do
     ssh_job_rows.map{|j| r.jobs(j['name'])}.each{|j| j.delete if j}
     jobs_sheet.add_or_update_rows(ssh_job_rows)
 
-    puts "job row added, force enqueued runner, wait 120s"
+    puts "job row added, force enqueue runner, wait 150s"
     r.enqueue!
-    sleep 120
+    sleep 150
 
     puts "update job status and activity"
     r.update_gsheet(gdrive_slot)

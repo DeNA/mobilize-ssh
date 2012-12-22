@@ -186,7 +186,10 @@ module Mobilize
       elsif su_user.nil? and Ssh.su_all_users(node)
         su_user = u.name
       end
-      Ssh.run(node,command,file_hash,su_user)
+      out_tsv = Ssh.run(node,command,file_hash,su_user)
+      #use Gridfs to cache result
+      out_url = "gridfs://#{s.path}/out"
+      Dataset.write_to_url(out_url,out_tsv)
     end
   end
 end

@@ -6,13 +6,13 @@
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_1.out"'
 - name: test_ssh_2
   active: true
-  trigger: once
+  trigger: "after test_ssh_1"
   status: ""
   stage1: 'ssh.run node:"test_node", cmd:"sh code.sh", su_user:"root", source:"Runner_mobilize(test)/code.sh"'
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_2.out"'
 - name: test_ssh_3
   active: true
-  trigger: once
+  trigger: "after test_ssh_2"
   status: ""
   stage1: 'ssh.run node:"test_node", cmd:"whoami"'
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_3.out"'
