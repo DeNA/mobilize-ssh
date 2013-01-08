@@ -69,6 +69,8 @@ run
 
 This will copy over a sample ssh.yml to your config dir.
 
+It will also add mobilize-ssh to the extensions in jobtracker.yml.
+
 <a name='section_Configure'></a>
 Configure
 ------------
@@ -104,25 +106,58 @@ Each host and gateway has a series of ssh params:
 Sample ssh.yml:
 
 ``` yml
-
+---
 development:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     dev_node:
-      host: {name: dev-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: dev-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      sudoers: 
+      - sudo_user
+      su_all_users: true
+      host: 
+        name: dev-host.com 
+        key: config/mobilize/ssh_private.key
+        port: 22
+        user: host_user
+      gateway: 
+        name: dev-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
 test:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     test_node:
-      host: {name: test-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: test-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      sudoers: 
+      - sudo_user
+      su_all_users: true
+      host: 
+        name: test-host.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: host_user
+      gateway: 
+        name: test-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
 production:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     prod_node:
-      host: {name: prod-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: prod-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      sudoers: 
+      - sudo_user
+      su_all_users: true
+      host:
+        name: prod-host.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: host_user
+      gateway: 
+        name: prod-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
 ```
 
 <a name='section_Start'></a>

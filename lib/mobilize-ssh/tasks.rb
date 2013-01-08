@@ -21,5 +21,18 @@ namespace :mobilize_ssh do
         `cp #{sample_dir}#{fname} #{full_config_dir}#{fname}`
       end
     end
+    #make sure that the jobtracker.yml is updated to include the
+    #mobilize-ssh library
+    jt_config_file = "#{config_dir}jobtracker.yml"
+    if File.exists?(jt_config_file)
+      yml_hash = YAML.load_file(jt_config_file)
+      yml_hash.keys.each do |k|
+        if yml_hash[k]['extensions'] and !yml_hash[k]['extensions'].include?('mobilize-ssh')
+          puts "adding mobilize-ssh to jobtracker.yml/#{k}/extensions"
+          yml_hash[k]['extensions'] = yml_hash[k]['extensions'].to_a + ['mobilize-ssh']
+        end
+      end
+      File.open(jt_config_file,"w") {|f| f.print(yml_hash.to_yaml)}
+    end
   end
 end

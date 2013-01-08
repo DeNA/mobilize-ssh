@@ -1,24 +1,52 @@
+---
 development:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     dev_node:
-      sudoers: [sudo_user]
+      sudoers: 
+      - sudo_user
       su_all_users: true
-      host: {name: dev-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: dev-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      host: 
+        name: dev-host.com 
+        key: config/mobilize/ssh_private.key
+        port: 22
+        user: host_user
+      gateway: 
+        name: dev-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
 test:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     test_node:
-      sudoers: [sudo_user]
+      sudoers: 
+      - sudo_user
       su_all_users: true
-      host: {name: test-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: test-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      host: 
+        name: test-host.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: host_user
+      gateway: 
+        name: test-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
 production:
-  tmp_file_dir: "tmp/file/"
+  tmp_file_dir: tmp/file/
   nodes:
     prod_node:
-      sudoers: [sudo_user]
+      sudoers: 
+      - sudo_user
       su_all_users: true
-      host: {name: prod-host.com, key: "config/mobilize/ssh_private.key", port: 22, user: host_user}
-      gateway: {name: prod-gateway.com, key: "config/mobilize/ssh_private.key", port: 22, user: gateway_user}
+      host:
+        name: prod-host.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: host_user
+      gateway: 
+        name: prod-gateway.com 
+        key: config/mobilize/ssh_private.key 
+        port: 22 
+        user: gateway_user
