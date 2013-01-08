@@ -38,7 +38,7 @@ install section first.
 add this to your Gemfile:
 
 ``` ruby
-gem "mobilize-ssh", "~>1.0"
+gem "mobilize-ssh"
 ```
 
 or do
@@ -55,8 +55,8 @@ for a ruby-wide install.
 Inside the Rakefile in your project's root dir, make sure you have:
 
 ``` ruby
-require 'mobilize-base/rakes'
-require 'mobilize-ssh/rakes'
+require 'mobilize-base/tasks'
+require 'mobilize-ssh/tasks'
 ```
 
 This defines rake tasks essential to run the environment.
