@@ -25,11 +25,11 @@ describe "Mobilize" do
     puts "add test code"
     rb_code_sheet = Mobilize::Gsheet.find_or_create_by_path("#{r.path.split("/")[0..-2].join("/")}/code.rb",gdrive_slot)
     rb_code_tsv = File.open("#{Mobilize::Base.root}/test/code.rb").read
-    rb_code_sheet.write(rb_code_tsv)
+    rb_code_sheet.write(rb_code_tsv,Mobilize::Gdrive.owner_name)
 
     sh_code_sheet = Mobilize::Gsheet.find_or_create_by_path("#{r.path.split("/")[0..-2].join("/")}/code.sh",gdrive_slot)
     sh_code_tsv = File.open("#{Mobilize::Base.root}/test/code.sh").read
-    sh_code_sheet.write(sh_code_tsv)
+    sh_code_sheet.write(sh_code_tsv,Mobilize::Gdrive.owner_name)
 
     jobs_sheet = r.gsheet(gdrive_slot)
 

@@ -158,7 +158,7 @@ module Mobilize
       file_hash = {}
       s.source_dsts(gdrive_slot).each do |sdst|
                                       file_name = sdst.path.split("/").last
-                                      file_hash[file_name] = sdst.read
+                                      file_hash[file_name] = sdst.read(u.name)
                                     end
       Gdrive.unslot_worker_by_path(s.path)
       su_user = s.params['su_user']
@@ -170,7 +170,7 @@ module Mobilize
       out_tsv = Ssh.run(node,command,file_hash,su_user)
       #use Gridfs to cache result
       out_url = "gridfs://#{s.path}/out"
-      Dataset.write_to_url(out_url,out_tsv)
+      Dataset.write_to_url(out_url,out_tsv,u.name)
     end
   end
 end
