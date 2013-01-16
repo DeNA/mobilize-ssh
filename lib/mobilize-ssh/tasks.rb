@@ -1,6 +1,7 @@
 namespace :mobilize_ssh do
   desc "Set up config and log folders and files"
   task :setup do
+    require 'yaml'
     sample_dir = File.dirname(__FILE__) + '/../samples/'
     sample_files = Dir.entries(sample_dir)
     config_dir = (ENV['MOBILIZE_CONFIG_DIR'] ||= "config/mobilize/")

@@ -149,37 +149,18 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.file_hash_by_stage_path(stage_path)
-      #this is not meant to be called directly
-      #from the Runner -- it's used by run_by_stage_path
-      s = Stage.where(:path=>stage_path).first
-      params = s.params
-      gsheet_paths = if params['sources']
-                       params['sources']
-                     elsif params['source']
-                       [params['source']]
-                     end
-      if gsheet_paths and gsheet_paths.length>0
-        gdrive_slot = Gdrive.slot_worker_by_path(stage_path)
-        file_hash = {}
-        gsheet_paths.map do |gpath|
-          string = Gsheet.find_by_path(gpath,gdrive_slot).to_tsv
-          fname = gpath.split("/").last
-          {fname => string}
-        end.each do |f|
-          file_hash = f.merge(file_hash)
-        end
-        Gdrive.unslot_worker_by_path(stage_path)
-        return file_hash
-      end
-    end
-
     def Ssh.run_by_stage_path(stage_path)
       s = Stage.where(:path=>stage_path).first
       u = s.job.runner.user
       params = s.params
       node, command = [params['node'],params['cmd']]
-      file_hash = Ssh.file_hash_by_stage_path(stage_path)
+      gdrive_slot = Gdrive.slot_worker_by_path(s.path)
+      file_hash = {}
+      s.source_dsts(gdrive_slot).each do |sdst|
+                                      file_name = sdst.path.split("/").last
+                                      file_hash[file_name] = sdst.read
+                                    end
+      Gdrive.unslot_worker_by_path(s.path)
       su_user = s.params['su_user']
       if su_user and !Ssh.sudoers(node).include?(u.name)
         raise "You do not have su permissions for this node"
