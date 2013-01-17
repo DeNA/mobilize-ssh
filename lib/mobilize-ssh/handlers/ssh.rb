@@ -24,6 +24,10 @@ module Mobilize
       Ssh.config['nodes'][node]['su_all_users']
     end
 
+    def Ssh.default_node
+      Ssh.config['default_node']
+    end
+
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
     def Ssh.needs_gateway?(node)
       host_domain_name = Ssh.host(node)['name'].split(".")[-2..-1].join(".")
@@ -67,14 +71,13 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,file_hash=nil,su_user=nil)
-      key,user = Ssh.host(node).ie{|h| ['key','user'].map{|k| h[k]}}
+    def Ssh.run(node,command,user,file_hash={})
+      key,default_user = Ssh.host(node).ie{|h| ['key','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
       Ssh.set_key_permissions(key_path)
-      su_user ||= user
       file_hash ||= {}
       #make sure the dir for this command is clear
-      comm_md5 = [su_user,node,command,file_hash.keys.to_s].join.to_md5
+      comm_md5 = [user,node,command,file_hash.keys.to_s].join.to_md5
       comm_dir = "#{Ssh.tmp_file_dir}#{comm_md5}"
       #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
@@ -98,8 +101,8 @@ module Mobilize
       Ssh.write(node,command,cmd_path)
       full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
-      fire_cmd = if su_user != user
-                   %{sudo su #{su_user} -c "#{full_cmd}"}
+      fire_cmd = if user != default_user
+                   %{sudo su #{user} -c "#{full_cmd}"}
                  else
                    full_cmd
                  end
@@ -154,6 +157,7 @@ module Mobilize
       u = s.job.runner.user
       params = s.params
       node, command = [params['node'],params['cmd']]
+      node ||= Ssh.default_node
       gdrive_slot = Gdrive.slot_worker_by_path(s.path)
       file_hash = {}
       s.source_dsts(gdrive_slot).each do |sdst|
@@ -161,16 +165,16 @@ module Mobilize
                                       file_hash[file_name] = sdst.read(u.name)
                                     end
       Gdrive.unslot_worker_by_path(s.path)
-      su_user = s.params['su_user']
-      if su_user and !Ssh.sudoers(node).include?(u.name)
-        raise "You do not have su permissions for this node"
-      elsif su_user.nil? and Ssh.su_all_users(node)
-        su_user = u.name
+      user = s.params['user']
+      if user and !Ssh.sudoers(node).include?(u.name)
+        raise "#{u.name} does not have su permissions for this node"
+      elsif user.nil? and Ssh.su_all_users(node)
+        user = u.name
       end
-      out_tsv = Ssh.run(node,command,file_hash,su_user)
+      out_tsv = Ssh.run(node,command,user,file_hash)
       #use Gridfs to cache result
       out_url = "gridfs://#{s.path}/out"
-      Dataset.write_to_url(out_url,out_tsv,u.name)
+      Dataset.write_to_url(out_url,out_tsv,Gdrive.owner_name)
     end
   end
 end

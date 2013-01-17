@@ -84,14 +84,15 @@ over to the nodes. They will be deleted afterwards, unless the job
 fails in mid-copy. By default this is tmp/file/.
 * nodes, identified by aliases, such as `test_node`. This alias is what you should
 pass into the "node" param over in the ssh.run task.
+* default_node is where commands will be executed if no node is specified.
 
 Each node has: 
 * a host;
 * a gateway (optional); If you don't need a gateway, remove that row from the configuration file.
-* sudoers; these are user names that are allowed to pass su_user params
+* sudoers; these are user names that are allowed to pass user params
 to the run call. This requires passwordless sudo for the host user.
 * su_all_users true/false option, which ensures that commands are executed by the
-user on the Runner. It prefixes all commands with sudo su <user_name> before executing the
+user on the Runner. It prefixes all commands with sudo su <user> before executing the
 command. This is strongly recommended if possible as it ensures users do
 not overstep their permissions. This requires passwordless sudo for the
 host user and accounts on the host machine for each user.
@@ -109,6 +110,7 @@ Sample ssh.yml:
 ---
 development:
   tmp_file_dir: tmp/file/
+  default_node: dev_node
   nodes:
     dev_node:
       sudoers: 
@@ -126,6 +128,7 @@ development:
         user: gateway_user
 test:
   tmp_file_dir: tmp/file/
+  default_node: test_node
   nodes:
     test_node:
       sudoers: 
@@ -143,6 +146,7 @@ test:
         user: gateway_user
 production:
   tmp_file_dir: tmp/file/
+  default_node: prod_node
   nodes:
     prod_node:
       sudoers: 
@@ -168,12 +172,13 @@ Start
 ### Create Job
 
 * For mobilize-ssh, the following task is available:
-  * ssh.run `node: <node_alias>, cmd: <command>, su_user: su_user, sources:[*<gsheet_full_paths>]`, which reads
+  * ssh.run `node: <node_alias>, cmd: <command>, user: user, sources:[*<gsheet_full_paths>]`, which reads
 all gsheets, copies them to a temporary folder on the selected node, and
 runs the command inside that folder. 
-  * su_user and sources are optional; node and cmd are required. su_user
-will cause the command to be prefixed with sudo su <su_user> -c.
-  * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb", su_user: "root", sources:["Runner_mobilize(test)/code.rb","Runner_mobilize(test)/code.sh"]`
+  * user, sources, and node are optional; cmd is required. 
+  * specifying user will cause the command to be prefixed with sudo su <user> -c.
+  * not specifying node will cause the command to be run on the default_node
+  * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb", user: "root", sources:["Runner_mobilize(test)/code.rb","Runner_mobilize(test)/code.sh"]`
 
 <a name='section_Start_Run_Test'></a>
 ### Run Test

@@ -2,17 +2,17 @@
   active: true
   trigger: once
   status: ""
-  stage1: 'ssh.run node:"test_node", cmd:"ruby code.rb", su_user:"root", sources:["Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"]'
+  stage1: 'ssh.run node:"test_node", cmd:"ruby code.rb", user:"root", sources:["Runner_mobilize(test)/code.rb", "Runner_mobilize(test)/code.sh"]'
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_1.out"'
 - name: test_ssh_2
   active: true
   trigger: "after test_ssh_1"
   status: ""
-  stage1: 'ssh.run node:"test_node", cmd:"sh code.sh", su_user:"root", source:"Runner_mobilize(test)/code.sh"'
+  stage1: 'ssh.run cmd:"sh code.sh", user:"root", source:"Runner_mobilize(test)/code.sh"'
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_2.out"'
 - name: test_ssh_3
   active: true
   trigger: "after test_ssh_2"
   status: ""
-  stage1: 'ssh.run node:"test_node", cmd:"whoami"'
+  stage1: 'ssh.run cmd:"whoami"'
   stage2: 'gsheet.write source:"stage1", target:"Runner_mobilize(test)/test_ssh_3.out"'

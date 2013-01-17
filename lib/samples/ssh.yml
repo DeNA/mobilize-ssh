@@ -1,6 +1,7 @@
 ---
 development:
   tmp_file_dir: tmp/file/
+  default_node: dev_node
   nodes:
     dev_node:
       sudoers: 
@@ -18,6 +19,7 @@ development:
         user: gateway_user
 test:
   tmp_file_dir: tmp/file/
+  default_node: test_node
   nodes:
     test_node:
       sudoers: 
@@ -35,6 +37,7 @@ test:
         user: gateway_user
 production:
   tmp_file_dir: tmp/file/
+  default_node: prod_node
   nodes:
     prod_node:
       sudoers: 
