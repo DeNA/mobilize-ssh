@@ -174,7 +174,7 @@ module Mobilize
       out_tsv = Ssh.run(node,command,user,file_hash)
       #use Gridfs to cache result
       out_url = "gridfs://#{s.path}/out"
-      Dataset.write_to_url(out_url,out_tsv,Gdrive.owner_name)
+      Dataset.write_by_url(out_url,out_tsv,Gdrive.owner_name)
     end
   end
 end
