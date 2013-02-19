@@ -10,7 +10,7 @@ Gem::Specification.new do |gem|
   gem.email         = ["cpaesleme@ngmoco.com"]
   gem.description   = %q{mobilize-ssh allows you to automate ssh commands and files across hosts}
   gem.summary       = %q{extend mobilize-base with the ability to run files across hosts}
-  gem.homepage      = "http://github.com/ngmoco/mobilize-ssh"
+  gem.homepage      = "http://github.com/dena/mobilize-ssh"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }

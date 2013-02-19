@@ -211,15 +211,15 @@ execute the second, which is a "tail /var/log/syslog" command, and write the res
 Meta
 ----
 
-* Code: `git clone git://github.com/ngmoco/mobilize-ssh.git`
-* Home: <https://github.com/ngmoco/mobilize-ssh>
-* Bugs: <https://github.com/ngmoco/mobilize-ssh/issues>
+* Code: `git clone git://github.com/dena/mobilize-ssh.git`
+* Home: <https://github.com/dena/mobilize-ssh>
+* Bugs: <https://github.com/dena/mobilize-ssh/issues>
 * Gems: <http://rubygems.org/gems/mobilize-ssh>
 
 <a name='section_Author'></a>
 Author
 ------
 
-Cassio Paes-Leme :: cpaesleme@ngmoco.com :: @cpaesleme
+Cassio Paes-Leme :: cpaesleme@dena.com :: @cpaesleme
 
-[mobilize-base]: https://github.com/ngmoco/mobilize-base
+[mobilize-base]: https://github.com/dena/mobilize-base
