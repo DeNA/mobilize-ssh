@@ -108,7 +108,7 @@ module Mobilize
                  end
       result = Ssh.fire!(node,fire_cmd)
       #remove the directory after you're done
-      FileUtils.rm_r rem_dir, :force=>true
+      rm_cmd = "rm -rf #{rem_dir}"
       Ssh.fire!(node,rm_cmd)
       result
     end
