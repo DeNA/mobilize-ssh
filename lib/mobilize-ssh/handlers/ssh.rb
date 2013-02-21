@@ -35,7 +35,7 @@ module Mobilize
     end
 
     def Ssh.pop_comm_dir(comm_dir,file_hash)
-      "rm -rf #{comm_dir}".bash
+      FileUtils.rm_r comm_dir, :force=>true
       file_hash.each do |fname,fdata|
         fpath = "#{comm_dir}/#{fname}"
         #for now, only gz is binary
@@ -89,7 +89,7 @@ module Mobilize
       Ssh.fire!(node,"rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
-        "rm -rf #{comm_dir}".bash
+        FileUtils.rm_r comm_dir, :force=>true
       else
         #create folder
         mkdir_command = "mkdir #{rem_dir}"
@@ -108,7 +108,7 @@ module Mobilize
                  end
       result = Ssh.fire!(node,fire_cmd)
       #remove the directory after you're done
-      rm_cmd = "rm -rf #{rem_dir}"
+      FileUtils.rm_r rem_dir, :force=>true
       Ssh.fire!(node,rm_cmd)
       result
     end
@@ -137,7 +137,7 @@ module Mobilize
     def Ssh.write(node,fdata,to_path,binary=false)
       from_path = Ssh.tmp_file(fdata,binary)
       Ssh.scp(node,from_path,to_path)
-      "rm #{from_path}".bash
+      FileUtils.rm from_path
       return true
     end
 
@@ -146,7 +146,8 @@ module Mobilize
       tmp_file_path = fpath || "#{Ssh.tmp_file_dir}#{(fdata + Time.now.utc.to_f.to_s).to_md5}"
       write_mode = binary ? "wb" : "w"
       #make sure folder is created
-      "mkdir -p #{tmp_file_path.split("/")[0..-2].join("/")}".bash
+      tmp_file_dir = tmp_file_path.split("/")[0..-2].join("/")
+      FileUtils.mkdir_p(tmp_file_dir)
       #write data to path
       File.open(tmp_file_path,write_mode) {|f| f.print(fdata)}
       return tmp_file_path
