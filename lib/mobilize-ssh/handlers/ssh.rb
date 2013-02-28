@@ -101,14 +101,15 @@ module Mobilize
       Ssh.write(node,command,cmd_path)
       full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
-      fire_cmd = if user != default_user
-                   %{sudo su #{user} -c "#{full_cmd}"}
-                 else
-                   full_cmd
-                 end
+      if user != default_user
+        #make sure user owns the folder and all files
+        fire_cmd = %{sudo chown -R #{user} #{rem_dir}; sudo su #{user} -c "#{full_cmd}"}
+        rm_cmd = %{sudo rm -rf #{rem_dir}}
+      else
+        fire_cmd = full_cmd
+        rm_cmd = "rm -rf #{rem_dir}"
+      end
       result = Ssh.fire!(node,fire_cmd)
-      #remove the directory after you're done
-      rm_cmd = "rm -rf #{rem_dir}"
       Ssh.fire!(node,rm_cmd)
       result
     end
