@@ -86,7 +86,7 @@ module Mobilize
       #make sure user starts in rem_dir
       rem_dir = "#{comm_md5}/"
       #make sure the rem_dir is gone
-      Ssh.fire!(node,"rm -rf #{rem_dir}")
+      Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
         FileUtils.rm_r comm_dir, :force=>true
@@ -161,11 +161,19 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       gdrive_slot = Gdrive.slot_worker_by_path(s.path)
+      return false unless gdrive_slot
       file_hash = {}
       s.source_dsts(gdrive_slot).each do |sdst|
-                                      file_name = sdst.path.split("/").last
-                                      file_hash[file_name] = sdst.read(u.name)
-                                    end
+                                        split_path = sdst.path.split("/")
+                                        #if path is to stage output, name with stage name
+                                        file_name = if split_path.last == "out" and
+                                                      (1..5).to_a.map{|n| "stage#{n.to_s}"}.include?(split_path[-2].to_s)
+                                                      "#{split_path[-2]}.out"
+                                                    else
+                                                      split_path.last
+                                                    end
+                                        file_hash[file_name] = sdst.read(u.name)
+                                      end
       Gdrive.unslot_worker_by_path(s.path)
       user = s.params['user']
       if user and !Ssh.sudoers(node).include?(u.name)
