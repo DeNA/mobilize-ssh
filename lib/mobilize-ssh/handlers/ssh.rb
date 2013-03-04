@@ -86,7 +86,7 @@ module Mobilize
       #make sure user starts in rem_dir
       rem_dir = "#{comm_md5}/"
       #make sure the rem_dir is gone
-      Ssh.fire!(node,"rm -rf #{rem_dir}")
+      Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
         FileUtils.rm_r comm_dir, :force=>true
@@ -119,16 +119,17 @@ module Mobilize
       key_path = "#{Base.root}/#{key}"
       Ssh.set_key_permissions(key_path)
       opts = {:port=>(port || 22),:keys=>key_path}
-      if Ssh.needs_gateway?(node)
-        gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
-        gkey_path = "#{Base.root}/#{gkey}"
-        gopts = {:port=>(gport || 22),:keys=>gkey_path}
-        Net::SSH::Gateway.run(gname,guser,name,user,cmd,gopts,opts)
-      else
-        Net::SSH.start(name,user,opts) do |ssh|
-          ssh.run(cmd)
-        end
-      end
+      response = if Ssh.needs_gateway?(node)
+                   gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
+                   gkey_path = "#{Base.root}/#{gkey}"
+                   gopts = {:port=>(gport || 22),:keys=>gkey_path}
+                   Net::SSH::Gateway.run(gname,guser,name,user,cmd,gopts,opts)
+                 else
+                   Net::SSH.start(name,user,opts) do |ssh|
+                     ssh.run(cmd)
+                   end
+                 end
+      response
     end
 
     def Ssh.read(node,path)
@@ -161,9 +162,17 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       gdrive_slot = Gdrive.slot_worker_by_path(s.path)
+      return nil unless gdrive_slot
       file_hash = {}
       s.source_dsts(gdrive_slot).each do |sdst|
-                                      file_name = sdst.path.split("/").last
+                                      split_path = sdst.path.split("/")
+                                      #if path is to stage output, name with stage name
+                                      file_name = if split_path.last == "out" and
+                                                    (1..5).to_a.map{|n| "stage#{n.to_s}"}.include?(split_path[-2].to_s)
+                                                    "#{split_path[-2]}.out"
+                                                  else
+                                                    split_path.last
+                                                  end
                                       file_hash[file_name] = sdst.read(u.name)
                                     end
       Gdrive.unslot_worker_by_path(s.path)
@@ -173,10 +182,13 @@ module Mobilize
       elsif user.nil? and Ssh.su_all_users(node)
         user = u.name
       end
-      out_tsv = Ssh.run(node,command,user,file_hash)
+      result = Ssh.run(node,command,user,file_hash)
       #use Gridfs to cache result
-      out_url = "gridfs://#{s.path}/out"
-      Dataset.write_by_url(out_url,out_tsv,Gdrive.owner_name)
+      response = {}
+      response['out_dst'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['out'].to_s,Gdrive.owner_name).path
+      response['err_dst'] = Dataset.write_by_url("gridfs://#{s.path}/err",result['err'].to_s,Gdrive.owner_name).path if result['err'].to_s.length>0
+      response['log_dst'] = Dataset.write_by_url("gridfs://#{s.path}/log",result['log'].to_s,Gdrive.owner_name).path if result['log'].to_s.length>0
+      response
     end
   end
 end
