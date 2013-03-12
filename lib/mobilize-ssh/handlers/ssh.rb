@@ -161,7 +161,7 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       gdrive_slot = Gdrive.slot_worker_by_path(s.path)
-      return false unless gdrive_slot
+      return nil unless gdrive_slot
       file_hash = {}
       s.source_dsts(gdrive_slot).each do |sdst|
                                         split_path = sdst.path.split("/")
