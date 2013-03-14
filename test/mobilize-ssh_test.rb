@@ -43,9 +43,9 @@ describe "Mobilize" do
     ssh_job_rows.map{|j| r.jobs(j['name'])}.each{|j| j.delete if j}
     jobs_sheet.add_or_update_rows(ssh_job_rows)
 
-    puts "job row added, force enqueue runner, wait 300s"
+    puts "job row added, force enqueue runner, wait for stages"
     r.enqueue!
-    sleep 300
+    wait_for_stages
 
     puts "update job status and activity"
     r.update_gsheet(gdrive_slot)
@@ -59,6 +59,29 @@ describe "Mobilize" do
     assert ssh_target_sheet_2.to_tsv.length > 100
     assert ssh_target_sheet_3.to_tsv.length > 3
 
+  end
+
+  def wait_for_stages(time_limit=600,stage_limit=120,wait_length=10)
+    time = 0
+    time_since_stage = 0
+    #check for 10 min
+    while time < time_limit and time_since_stage < stage_limit
+      sleep wait_length
+      job_classes = Mobilize::Resque.jobs.map{|j| j['class']}
+      if job_classes.include?("Mobilize::Stage")
+        time_since_stage = 0
+        puts "saw stage at #{time.to_s} seconds"
+      else
+        time_since_stage += wait_length
+        puts "#{time_since_stage.to_s} seconds since stage seen"
+      end
+      time += wait_length
+      puts "total wait time #{time.to_s} seconds"
+    end
+
+    if time >= time_limit
+      raise "Timed out before stage completion"
+    end
   end
 
 end

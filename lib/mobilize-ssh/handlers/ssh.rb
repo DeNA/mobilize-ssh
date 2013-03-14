@@ -167,8 +167,6 @@ module Mobilize
       params = s.params
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
-      gdrive_slot = Gdrive.slot_worker_by_path(s.path)
-      return nil unless gdrive_slot
       file_hash = {}
       s.sources.each do |sdst|
                        split_path = sdst.path.split("/")
@@ -181,7 +179,6 @@ module Mobilize
                                    end
                        file_hash[file_name] = sdst.read(u.name)
                      end
-      Gdrive.unslot_worker_by_path(s.path)
       user = s.params['user']
       if user and !Ssh.sudoers(node).include?(u.name)
         raise "#{u.name} does not have su permissions for this node"
@@ -191,9 +188,9 @@ module Mobilize
       result = Ssh.run(node,command,user,file_hash)
       #use Gridfs to cache result
       response = {}
-      response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['out'].to_s,Gdrive.owner_name).url
-      response['err_url'] = Dataset.write_by_url("gridfs://#{s.path}/err",result['err'].to_s,Gdrive.owner_name).url if result['err'].to_s.length>0
-      response['signal'] = result['signal']
+      response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)
+      response['err_url'] = Dataset.write_by_url("gridfs://#{s.path}/err",result['stderr'].to_s,Gdrive.owner_name) if result['stderr'].to_s.length>0
+      response['signal'] = result['exit_code']
       response
     end
   end
