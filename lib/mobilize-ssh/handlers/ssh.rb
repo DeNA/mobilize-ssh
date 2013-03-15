@@ -24,8 +24,12 @@ module Mobilize
       Ssh.config['nodes'][node]['su_all_users']
     end
 
+    def Ssh.nodes
+      Ssh.config['nodes'].keys
+    end
+
     def Ssh.default_node
-      Ssh.config['default_node']
+      Ssh.nodes.first
     end
 
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
@@ -55,8 +59,39 @@ module Mobilize
 
     # converts a source path or target path to a dst in the context of handler and stage
     def Ssh.path_to_dst(path,stage_path)
-      #Ssh follows the same convention as Gsheet
-      Gsheet.path_to_dst(path,stage_path)
+      has_handler = true if path.index("://")
+      path = path.split("://").last
+      #is user has a handler, their first path node is a node name,
+      #or there are more than 2 path nodes, try to find Ssh file
+      if has_handler or Ssh.nodes.include?(path.split("/").first) or path.split("/").length > 2
+        user_name = Ssh.user_name_by_stage_path(stage_path)
+        ssh_url = Ssh.url_by_path(path,user_name)
+        return Dataset.find_or_create_by_url(ssh_url)
+      end
+      #otherwise, use Gsheet
+      return Gsheet.path_to_dst(path,stage_path)
+    end
+
+    def Ssh.url_by_path(path,user_name)
+      node = path.split("/").first.to_s
+      if Ssh.nodes.include?(node)
+        #cut node out of path
+        path = "/" + path.split("/")[1..-1].join("/")
+      else
+        node = Ssh.default_node
+        path = path.starts_with?("/") ? path : "/#{path}"
+      end
+      url = "ssh://#{node}#{path}"
+      begin
+        response = Ssh.run(node, "head -1 #{path}", user_name)
+        if response['exit_code'] != 0
+          raise "Unable to find #{url} with error: #{response['stderr']}"
+        else
+          return "ssh://#{node}#{path}"
+        end
+      rescue => exc
+        raise Exception, "Unable to find #{url} with error: #{exc.to_s}", exc.backtrace
+      end
     end
 
     def Ssh.scp(node,from_path,to_path)
@@ -138,8 +173,16 @@ module Mobilize
       response
     end
 
-    def Ssh.read(node,path)
-      Ssh.fire!(node,"cat #{path}")
+    def Ssh.read_by_dataset_path(dst_path,user_name,*args)
+      #expects node as first part of path
+      node,path = dst_path.split("/").ie{|pa| [pa.first,pa[1..-1].join("/")]}
+      #slash in front of path
+      response = Ssh.run(node,"cat /#{path}",user_name)
+      if response['exit_code'] == 0
+        return response['stdout']
+      else
+        raise "Unable to read ssh://#{dst_path} with error: #{response['stderr']}"
+      end
     end
 
     def Ssh.write(node,fdata,to_path,binary=false)
@@ -161,13 +204,24 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.run_by_stage_path(stage_path)
+    def Ssh.user_name_by_stage_path(stage_path)
       s = Stage.where(:path=>stage_path).first
       u = s.job.runner.user
-      params = s.params
-      node, command = [params['node'],params['cmd']]
-      node ||= Ssh.default_node
+      user_name = s.params['user']
+      node = s.params['node'] || Ssh.default_node
+      if user_name and !Ssh.sudoers(node).include?(u.name)
+        raise "#{u.name} does not have su permissions for this node"
+      elsif user_name.nil? and Ssh.su_all_users(node)
+        user_name = u.name
+      end
+      return user_name
+    end
+
+    def Ssh.file_hash_by_stage_path(stage_path)
       file_hash = {}
+      s = Stage.where(:path=>stage_path).first
+      u = s.job.runner.user
+      user_name = Ssh.user_name_by_stage_path(stage_path)
       s.sources.each do |sdst|
                        split_path = sdst.path.split("/")
                        #if path is to stage output, name with stage name
@@ -177,15 +231,25 @@ module Mobilize
                                    else
                                      split_path.last
                                    end
-                       file_hash[file_name] = sdst.read(u.name)
+                       if ["gsheet","gfile"].include?(sdst.handler)
+                         #google drive sources are always read as the user
+                         file_hash[file_name] = sdst.read(u.name)
+                       else
+                         #other sources should be read by su-user
+                         file_hash[file_name] = sdst.read(user_name)
+                       end
                      end
-      user = s.params['user']
-      if user and !Ssh.sudoers(node).include?(u.name)
-        raise "#{u.name} does not have su permissions for this node"
-      elsif user.nil? and Ssh.su_all_users(node)
-        user = u.name
-      end
-      result = Ssh.run(node,command,user,file_hash)
+      return file_hash
+    end
+
+    def Ssh.run_by_stage_path(stage_path)
+      s = Stage.where(:path=>stage_path).first
+      params = s.params
+      node, command = [params['node'],params['cmd']]
+      node ||= Ssh.default_node
+      user_name = Ssh.user_name_by_stage_path(stage_path)
+      file_hash = Ssh.file_hash_by_stage_path(stage_path)
+      result = Ssh.run(node,command,user_name,file_hash)
       #use Gridfs to cache result
       response = {}
       response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)

@@ -84,7 +84,7 @@ over to the nodes. They will be deleted afterwards, unless the job
 fails in mid-copy. By default this is tmp/file/.
 * nodes, identified by aliases, such as `test_node`. This alias is what you should
 pass into the "node" param over in the ssh.run task.
-* default_node is where commands will be executed if no node is specified.
+  * if no node is specified, commands will default to the first node listed.
 
 Each node has: 
 * a host;
@@ -110,7 +110,6 @@ Sample ssh.yml:
 ---
 development:
   tmp_file_dir: tmp/file/
-  default_node: dev_node
   nodes:
     dev_node:
       sudoers: 
@@ -128,7 +127,6 @@ development:
         user: gateway_user
 test:
   tmp_file_dir: tmp/file/
-  default_node: test_node
   nodes:
     test_node:
       sudoers: 
@@ -146,7 +144,6 @@ test:
         user: gateway_user
 production:
   tmp_file_dir: tmp/file/
-  default_node: prod_node
   nodes:
     prod_node:
       sudoers: 
@@ -172,13 +169,15 @@ Start
 ### Create Job
 
 * For mobilize-ssh, the following task is available:
-  * ssh.run `node: <node_alias>, cmd: <command>, user: user, sources:[*<gsheet_full_paths>]`, which reads
-all gsheets, copies them to a temporary folder on the selected node, and
-runs the command inside that folder. 
+  * ssh.run `node: <node_alias>, cmd: <command>, user: user, sources:[*<source_paths>]`, which reads sources, copies them to a temporary folder on the selected node, and runs the command inside that folder. 
   * user, sources, and node are optional; cmd is required. 
-  * specifying user will cause the command to be prefixed with sudo su <user> -c.
-  * not specifying node will cause the command to be run on the default_node
-  * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb", user: "root", sources:["Runner_mobilize(test)/code.rb","Runner_mobilize(test)/code.sh"]`
+  * specifying user will cause the command to be prefixed with sudo su <user> -c. 
+    * non-google sources will also be read as the specified user.
+  * not specifying node will cause the command to be run on the default node.
+  * ssh sources can be specified with syntax
+`ssh://<node><file_full_path>`. If node is omitted, default node will be used.
+  * `<node><file_full_path>` and `<file_full_path>` can be used in the context of ssh.run, but if the path has only 1 slash, or none, it will try to find a google sheet or file instead.
+  * The test uses `ssh.run node:"test_node", cmd:"ruby code.rb", user: "root", sources:["code.rb","code.sh"]`
 
 <a name='section_Start_Run_Test'></a>
 ### Run Test

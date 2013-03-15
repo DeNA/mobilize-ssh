@@ -20,6 +20,7 @@ describe "Mobilize" do
 
     rb_code_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.rb",gdrive_slot)
     sh_code_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.sh",gdrive_slot)
+    sh_code_sheet2 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code2.sh",gdrive_slot)
     [rb_code_sheet,sh_code_sheet].each {|s| s.delete if s}
 
     puts "add test code"
@@ -30,6 +31,10 @@ describe "Mobilize" do
     sh_code_sheet = Mobilize::Gsheet.find_or_create_by_path("#{r.path.split("/")[0..-2].join("/")}/code.sh",gdrive_slot)
     sh_code_tsv = File.open("#{Mobilize::Base.root}/test/code.sh").read
     sh_code_sheet.write(sh_code_tsv,Mobilize::Gdrive.owner_name)
+
+    sh_code_sheet2 = Mobilize::Gsheet.find_or_create_by_path("#{r.path.split("/")[0..-2].join("/")}/code2.sh",gdrive_slot)
+    sh_code_tsv2 = File.open("#{Mobilize::Base.root}/test/code2.sh").read
+    sh_code_sheet2.write(sh_code_tsv2,Mobilize::Gdrive.owner_name)
 
     jobs_sheet = r.gsheet(gdrive_slot)
 
