@@ -204,11 +204,11 @@ module Mobilize
       return tmp_file_path
     end
 
-    def Ssh.user_name_by_stage_path(stage_path)
+    def Ssh.user_name_by_stage_path(stage_path,node=nil)
       s = Stage.where(:path=>stage_path).first
       u = s.job.runner.user
       user_name = s.params['user']
-      node = s.params['node'] || Ssh.default_node
+      node ||= (s.params['node'] || Ssh.default_node)
       if user_name and !Ssh.sudoers(node).include?(u.name)
         raise "#{u.name} does not have su permissions for this node"
       elsif user_name.nil? and Ssh.su_all_users(node)
