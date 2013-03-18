@@ -60,16 +60,16 @@ module Mobilize
     # converts a source path or target path to a dst in the context of handler and stage
     def Ssh.path_to_dst(path,stage_path)
       has_handler = true if path.index("://")
-      path = path.split("://").last
+      red_path = path.split("://").last
       #is user has a handler, their first path node is a node name,
       #or there are more than 2 path nodes, try to find Ssh file
-      if has_handler or Ssh.nodes.include?(path.split("/").first) or path.split("/").length > 2
+      if has_handler or Ssh.nodes.include?(red_path.split("/").first) or red_path.split("/").length > 2
         user_name = Ssh.user_name_by_stage_path(stage_path)
-        ssh_url = Ssh.url_by_path(path,user_name)
+        ssh_url = Ssh.url_by_path(red_path,user_name)
         return Dataset.find_or_create_by_url(ssh_url)
       end
       #otherwise, use Gsheet
-      return Gsheet.path_to_dst(path,stage_path)
+      return Gsheet.path_to_dst(red_path,stage_path)
     end
 
     def Ssh.url_by_path(path,user_name)
