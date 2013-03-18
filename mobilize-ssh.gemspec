@@ -7,7 +7,7 @@ Gem::Specification.new do |gem|
   gem.name          = "mobilize-ssh"
   gem.version       = Mobilize::Ssh::VERSION
   gem.authors       = ["Cassio Paes-Leme"]
-  gem.email         = ["cpaesleme@ngmoco.com"]
+  gem.email         = ["cpaesleme@dena.com"]
   gem.description   = %q{mobilize-ssh allows you to automate ssh commands and files across hosts}
   gem.summary       = %q{extend mobilize-base with the ability to run files across hosts}
   gem.homepage      = "http://github.com/dena/mobilize-ssh"
