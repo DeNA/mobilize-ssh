@@ -50,7 +50,7 @@ describe "Mobilize" do
 
     puts "job row added, force enqueue runner, wait for stages"
     r.enqueue!
-    wait_for_stages
+    wait_for_stages(900)
 
     puts "update job status and activity"
     r.update_gsheet(gdrive_slot)
