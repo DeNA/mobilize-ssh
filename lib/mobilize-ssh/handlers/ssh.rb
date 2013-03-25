@@ -234,7 +234,8 @@ module Mobilize
                                    end
                        if ["gsheet","gfile"].include?(sdst.handler)
                          #google drive sources are always read as the user
-                         file_hash[file_name] = sdst.read(u.name)
+                         #with the apportioned slot
+                         file_hash[file_name] = sdst.read(u.name,gdrive_slot)
                        else
                          #other sources should be read by su-user
                          file_hash[file_name] = sdst.read(user_name)
