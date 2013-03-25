@@ -58,7 +58,7 @@ module Mobilize
     end
 
     # converts a source path or target path to a dst in the context of handler and stage
-    def Ssh.path_to_dst(path,stage_path)
+    def Ssh.path_to_dst(path,stage_path,gdrive_slot)
       has_handler = true if path.index("://")
       red_path = path.split("://").last
       #is user has a handler, their first path node is a node name,
@@ -69,7 +69,7 @@ module Mobilize
         return Dataset.find_or_create_by_url(ssh_url)
       end
       #otherwise, use Gsheet
-      return Gsheet.path_to_dst(red_path,stage_path)
+      return Gsheet.path_to_dst(red_path,stage_path,gdrive_slot)
     end
 
     def Ssh.url_by_path(path,user_name)
@@ -218,12 +218,12 @@ module Mobilize
       return user_name
     end
 
-    def Ssh.file_hash_by_stage_path(stage_path)
+    def Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
       file_hash = {}
       s = Stage.where(:path=>stage_path).first
       u = s.job.runner.user
       user_name = Ssh.user_name_by_stage_path(stage_path)
-      s.sources.each do |sdst|
+      s.sources(gdrive_slot).each do |sdst|
                        split_path = sdst.path.split("/")
                        #if path is to stage output, name with stage name
                        file_name = if split_path.last == "out" and
@@ -244,12 +244,16 @@ module Mobilize
     end
 
     def Ssh.run_by_stage_path(stage_path)
+      gdrive_slot = Gdrive.slot_worker_by_path(stage_path)
+      #return blank response if there are no slots available
+      return nil unless gdrive_slot
       s = Stage.where(:path=>stage_path).first
       params = s.params
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       user_name = Ssh.user_name_by_stage_path(stage_path)
-      file_hash = Ssh.file_hash_by_stage_path(stage_path)
+      file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
+      Gdrive.unslot_worker_by_path(stage_path)
       result = Ssh.run(node,command,user_name,file_hash)
       #use Gridfs to cache result
       response = {}
