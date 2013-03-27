@@ -118,7 +118,7 @@ module Mobilize
       Ssh.set_key_permissions(key_path)
       file_hash ||= {}
       #make sure the dir for this command is clear
-      comm_md5 = [user,node,command,file_hash.keys.to_s].join.to_md5
+      comm_md5 = [user,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
       comm_dir = "#{Ssh.tmp_file_dir}#{comm_md5}"
       #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)

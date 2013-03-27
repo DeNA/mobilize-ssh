@@ -1,5 +1,5 @@
 module Mobilize
   module Ssh
-    VERSION = "1.29"
+    VERSION = "1.291"
   end
 end
