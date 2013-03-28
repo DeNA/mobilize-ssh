@@ -208,7 +208,7 @@ module Mobilize
       s = Stage.where(:path=>stage_path).first
       u = s.job.runner.user
       user_name = s.params['user']
-      node = s.params['node'] 
+      node = s.params['node']
       node = Ssh.default_node unless Ssh.nodes.include?(node)
       if user_name and !Ssh.sudoers(node).include?(u.name)
         raise "#{u.name} does not have su permissions for this node"
@@ -226,9 +226,12 @@ module Mobilize
       s.sources(gdrive_slot).each do |sdst|
                        split_path = sdst.path.split("/")
                        #if path is to stage output, name with stage name
-                       file_name = if split_path.last == "out" and
-                                     (1..5).to_a.map{|n| "stage#{n.to_s}"}.include?(split_path[-2].to_s)
+                       file_name = if (split_path.last == "out" and (1..5).to_a.map{|n| "stage#{n.to_s}"}.include?(split_path[-2].to_s))
+                                     #<jobname>/stage1/out
                                      "#{split_path[-2]}.out"
+                                   elsif (1..5).to_a.map{|n| "stage#{n.to_s}"}.include?(split_path.last[-6..-1])
+                                     #runner<jobname>stage1
+                                   "#{split_path.last[-6..-1]}.out"
                                    else
                                      split_path.last
                                    end
