@@ -53,7 +53,12 @@ module Mobilize
     def Ssh.set_key_permissions(key_path)
       #makes sure permissions are set as appropriate for ssh key
       raise "could not find ssh key at #{key_path}" unless File.exists?(key_path)
-      File.chmod(0600,key_path) unless File.stat(key_path).mode.to_s(8)[3..5] == "600"
+      #keys named with .pem are 
+      if key_path.ends_with?(".pem")
+        File.chmod(0400,key_path) unless File.stat(key_path).mode.to_s(8)[3..5] == "400"
+      else
+        File.chmod(0600,key_path) unless File.stat(key_path).mode.to_s(8)[3..5] == "600"
+      end
       return true
     end
 
