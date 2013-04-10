@@ -35,7 +35,6 @@ module Mobilize
     end
 
     def Ssh.pop_comm_dir(comm_dir,file_hash)
-      FileUtils.rm_r comm_dir, :force=>true
       file_hash.each do |fname,fdata|
         fpath = "#{comm_dir}/#{fname}"
         #for now, only gz is binary
@@ -116,7 +115,6 @@ module Mobilize
       Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
-        FileUtils.rm_r comm_dir, :force=>true
       else
         #create folder
         mkdir_command = "mkdir #{rem_dir}"
@@ -173,7 +171,6 @@ module Mobilize
     def Ssh.write(node,fdata,to_path,binary=false)
       from_path = Ssh.tmp_file(fdata,binary)
       Ssh.scp(node,from_path,to_path)
-      FileUtils.rm from_path
       return true
     end
 
