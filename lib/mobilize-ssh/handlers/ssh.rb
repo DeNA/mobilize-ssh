@@ -107,14 +107,14 @@ module Mobilize
       comm_dir = Dir.mktmpdir
       #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
-      #move any files up to the node
-      rem_dir = nil
       #make sure user starts in rem_dir
       rem_dir = "#{comm_md5}/"
       #make sure the rem_dir is gone
       Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
+        #make sure comm_dir is removed
+        FileUtils.rm_r(comm_dir,:force=>true)
       else
         #create folder
         mkdir_command = "mkdir #{rem_dir}"
@@ -171,6 +171,8 @@ module Mobilize
     def Ssh.write(node,fdata,to_path,binary=false)
       from_path = Ssh.tmp_file(fdata,binary)
       Ssh.scp(node,from_path,to_path)
+      #make sure local is removed
+      FileUtils.rm_r(from_path,:force=>true)
       return true
     end
 
