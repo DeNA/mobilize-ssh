@@ -4,10 +4,6 @@ module Mobilize
       Base.config('ssh')
     end
 
-    def Ssh.tmp_file_dir
-      Ssh.config['tmp_file_dir']
-    end
-
     def Ssh.host(node)
       Ssh.config['nodes'][node]['host']
     end
@@ -50,18 +46,6 @@ module Mobilize
       return true if file_hash.keys.length>0
     end
 
-    def Ssh.set_key_permissions(key_path)
-      #makes sure permissions are set as appropriate for ssh key
-      raise "could not find ssh key at #{key_path}" unless File.exists?(key_path)
-      #keys named with .pem are 
-      if key_path.ends_with?(".pem")
-        File.chmod(0400,key_path) unless File.stat(key_path).mode.to_s(8)[3..5] == "400"
-      else
-        File.chmod(0600,key_path) unless File.stat(key_path).mode.to_s(8)[3..5] == "600"
-      end
-      return true
-    end
-
     # converts a source path or target path to a dst in the context of handler and stage
     def Ssh.path_to_dst(path,stage_path,gdrive_slot)
       has_handler = true if path.index("://")
@@ -102,7 +86,6 @@ module Mobilize
     def Ssh.scp(node,from_path,to_path)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
-      Ssh.set_key_permissions(key_path)
       opts = {:port=>(port || 22),:keys=>key_path}
       if Ssh.needs_gateway?(node)
         gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
@@ -118,13 +101,11 @@ module Mobilize
     end
 
     def Ssh.run(node,command,user,file_hash={})
-      key,default_user = Ssh.host(node).ie{|h| ['key','user'].map{|k| h[k]}}
-      key_path = "#{Base.root}/#{key}"
-      Ssh.set_key_permissions(key_path)
+      default_user = Ssh.host(node)['user']
       file_hash ||= {}
       #make sure the dir for this command is clear
       comm_md5 = [user,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
-      comm_dir = "#{Ssh.tmp_file_dir}#{comm_md5}"
+      comm_dir = Dir.mktmpdir
       #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
       #move any files up to the node
@@ -163,7 +144,6 @@ module Mobilize
     def Ssh.fire!(node,cmd)
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
-      Ssh.set_key_permissions(key_path)
       opts = {:port=>(port || 22),:keys=>key_path}
       response = if Ssh.needs_gateway?(node)
                    gname,gkey,gport,guser = Ssh.gateway(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
@@ -199,11 +179,8 @@ module Mobilize
 
     def Ssh.tmp_file(fdata,binary=false,fpath=nil)
       #creates a file under tmp/files with an md5 from the data
-      tmp_file_path = fpath || "#{Ssh.tmp_file_dir}#{(fdata + Time.now.utc.to_f.to_s).to_md5}"
+      tmp_file_path = fpath || "#{Dir.mktmpdir}/#{(fdata + Time.now.utc.to_f.to_s).to_md5}"
       write_mode = binary ? "wb" : "w"
-      #make sure folder is created
-      tmp_file_dir = tmp_file_path.split("/")[0..-2].join("/")
-      FileUtils.mkdir_p(tmp_file_dir)
       #write data to path
       File.open(tmp_file_path,write_mode) {|f| f.print(fdata)}
       return tmp_file_path

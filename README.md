@@ -79,9 +79,6 @@ Configure
 ### Configure Ssh
 
 The Ssh configuration consists of:
-* tmp_file_dir, which is where files will be stored before being scp'd
-over to the nodes. They will be deleted afterwards, unless the job
-fails in mid-copy. By default this is tmp/file/.
 * nodes, identified by aliases, such as `test_node`. This alias is what you should
 pass into the "node" param over in the ssh.run task.
   * if no node is specified, commands will default to the first node listed.
@@ -109,7 +106,6 @@ Sample ssh.yml:
 ``` yml
 ---
 development:
-  tmp_file_dir: tmp/file/
   nodes:
     dev_node:
       sudoers: 
@@ -126,7 +122,6 @@ development:
         port: 22 
         user: gateway_user
 test:
-  tmp_file_dir: tmp/file/
   nodes:
     test_node:
       sudoers: 
@@ -143,7 +138,6 @@ test:
         port: 22 
         user: gateway_user
 production:
-  tmp_file_dir: tmp/file/
   nodes:
     prod_node:
       sudoers: 
