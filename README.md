@@ -13,6 +13,7 @@ Table Of Contents
   * [Install Dirs and Files](#section_Install_Dirs_and_Files)
 * [Configure](#section_Configure)
   * [Ssh](#section_Configure_Ssh)
+  * [Git](#section_Configure_Git)
 * [Start](#section_Start)
   * [Create Job](#section_Start_Create_Job)
   * [Run Test](#section_Start_Run_Test)
@@ -155,6 +156,57 @@ production:
         user: gateway_user
 ```
 
+<a name='section_Configure_Git'></a>
+### Configure Git
+
+Git configuration is not required but recommended, as it allows you to
+pull files directly from public or private Git repositories.
+
+The Git configuration consists of:
+* domains, identified by aliases, such as `private` and `public`.
+  * domains are passed into the source parameters in the git.run task.
+  * if no domain is specified, commands will default to the first domain listed.
+
+Each domain has: 
+* a host;
+* a key (optional); If you don't need an ssh key to access the repo, remove that row from the configuration file.
+  * this is the relative path of the ssh key required to access the repository.
+* a user, which is the user used for the git clone command.
+
+Sample git.yml:
+
+``` yml
+---
+development:
+  domains:
+    private:
+      host: github.<domain>.com
+      key: config/mobilize/ssh_private.key
+      user: git
+    public:
+      host: github.com
+      user: git
+test:
+  domains:
+    private:
+      host: github.<domain>.com
+      key: config/mobilize/ssh_private.key
+      user: git
+    public:
+      host: github.com
+      user: git
+production:
+  domains:
+    private:
+      host: github.<domain>.com
+      key: config/mobilize/ssh_private.key
+      user: git
+    public:
+      host: github.com
+      user: git
+```
+
+
 <a name='section_Start'></a>
 Start
 -----
@@ -167,6 +219,11 @@ Start
   * user, sources, and node are optional; cmd is required. 
   * specifying user will cause the command to be prefixed with sudo su <user> -c. 
     * non-google sources will also be read as the specified user.
+  * git sources can be specified with syntax `git://<domain>/<repo_owner>/<repo_name>/<revision>/<file_path>`. 
+    * Accessing private repos requires that you add the Mobilize public key to the repository as a deploy key.
+      * there is no user-level access control for git repositories at this time.
+    * domain defaults to the first one listed, if not included.
+    * revision defaults to HEAD if not included.
   * not specifying node will cause the command to be run on the default node.
   * ssh sources can be specified with syntax
 `ssh://<node><file_full_path>`. If node is omitted, default node will be used.

@@ -1,39 +1,7 @@
 module Mobilize
   module Ssh
-    def Ssh.config
-      Base.config('ssh')
-    end
-
-    def Ssh.host(node)
-      Ssh.config['nodes'][node]['host']
-    end
-
-    def Ssh.gateway(node)
-      Ssh.config['nodes'][node]['gateway']
-    end
-
-    def Ssh.sudoers(node)
-      Ssh.config['nodes'][node]['sudoers']
-    end
-
-    def Ssh.su_all_users(node)
-      Ssh.config['nodes'][node]['su_all_users']
-    end
-
-    def Ssh.nodes
-      Ssh.config['nodes'].keys
-    end
-
-    def Ssh.default_node
-      Ssh.nodes.first
-    end
-
-    #determine if current machine is on host domain, needs gateway if one is provided and it is not
-    def Ssh.needs_gateway?(node)
-      host_domain_name = Ssh.host(node)['name'].split(".")[-2..-1].join(".")
-      return true if Ssh.gateway(node) and Socket.domain_name != host_domain_name
-    end
-
+    #adds convenience methods
+    require "#{File.dirname(__FILE__)}/../helpers/ssh_helper"
     def Ssh.pop_comm_dir(comm_dir,file_hash)
       file_hash.each do |fname,fdata|
         fpath = "#{comm_dir}/#{fname}"
@@ -99,12 +67,21 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,user,file_hash={})
+    def Ssh.run(node,command,user,file_hash={},params={})
       default_user = Ssh.host(node)['user']
       file_hash ||= {}
       #make sure the dir for this command is clear
       comm_md5 = [user,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
       comm_dir = Dir.mktmpdir
+      #add in default methods to the params
+      params.merge(Ssh.default_params)
+      #replace any params in the file_hash and command
+      params.each do |k,v|
+        command.gsub!(k,v)
+        file_hash.each do |name,data|
+          data.gsub!(k,v)
+        end
+      end
       #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
       #make sure user starts in rem_dir

@@ -12,3 +12,4 @@ module Mobilize
   end
 end
 require "mobilize-ssh/handlers/ssh"
+require "mobilize-ssh/handlers/git"
