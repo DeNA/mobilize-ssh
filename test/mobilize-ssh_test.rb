@@ -42,6 +42,7 @@ describe "Mobilize" do
     ssh_target_sheet_1 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_1.out",gdrive_slot)
     ssh_target_sheet_2 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_2.out",gdrive_slot)
     ssh_target_sheet_3 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_3.out",gdrive_slot)
+    ssh_target_sheet_4 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_4.out",gdrive_slot)
     [ssh_target_sheet_1,ssh_target_sheet_2,ssh_target_sheet_3].each {|s| s.delete if s}
 
     ssh_job_rows = ::YAML.load_file("#{Mobilize::Base.root}/test/ssh_job_rows.yml")
@@ -59,10 +60,12 @@ describe "Mobilize" do
     ssh_target_sheet_1 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_1.out",gdrive_slot)
     ssh_target_sheet_2 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_2.out",gdrive_slot)
     ssh_target_sheet_3 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_3.out",gdrive_slot)
+    ssh_target_sheet_4 = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/test_ssh_4.out",gdrive_slot)
 
     assert ssh_target_sheet_1.to_tsv.length > 100
     assert ssh_target_sheet_2.to_tsv.length > 100
     assert ssh_target_sheet_3.to_tsv.length > 3
+    assert ssh_target_sheet_4.to_tsv.length > 100
 
   end
 
