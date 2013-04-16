@@ -22,4 +22,4 @@
   trigger: once
   status: ""
   stage1: 'ssh.run node:"test_node", sources:["git://DeNA/mobilize-ssh/test/code.rb","git://DeNA/mobilize-ssh/test/code.sh"], cmd:"ruby code.rb"'
-  stage2: 'gsheet.write source:stage1, target:"test_git_4.out"'
+  stage2: 'gsheet.write source:stage1, target:"test_ssh_4.out"'
