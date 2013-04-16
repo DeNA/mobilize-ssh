@@ -219,11 +219,10 @@ Start
   * user, sources, and node are optional; cmd is required. 
   * specifying user will cause the command to be prefixed with sudo su <user> -c. 
     * non-google sources will also be read as the specified user.
-  * git sources can be specified with syntax `git://<domain>/<repo_owner>/<repo_name>/<revision>/<file_path>`. 
+  * git sources can be specified with syntax `git://<domain>/<repo_owner>/<repo_name>/<file_path>`. 
     * Accessing private repos requires that you add the Mobilize public key to the repository as a deploy key.
       * there is no user-level access control for git repositories at this time.
     * domain defaults to the first one listed, if not included.
-    * revision defaults to HEAD if not included.
   * not specifying node will cause the command to be run on the default node.
   * ssh sources can be specified with syntax
 `ssh://<node><file_full_path>`. If node is omitted, default node will be used.

@@ -14,8 +14,8 @@ describe "Mobilize" do
 
     gdrive_slot = Mobilize::Gdrive.owner_email
     puts "create user 'mobilize'"
-    user = gdrive_slot.split("@").first
-    u = Mobilize::User.where(:name=>user).first
+    user_name = gdrive_slot.split("@").first
+    u = Mobilize::User.where(:name=>user_name).first
     r = u.runner
 
     rb_code_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.rb",gdrive_slot)
