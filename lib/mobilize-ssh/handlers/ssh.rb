@@ -221,6 +221,8 @@ module Mobilize
       response = {}
       response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)
       response['err_url'] = Dataset.write_by_url("gridfs://#{s.path}/err",result['stderr'].to_s,Gdrive.owner_name) if result['stderr'].to_s.length>0
+      #is an error if there is no out and there is an err, regardless of signal
+      result['exit_code'] = 500 if result['stdout'].to_s.strip.length==0 and result['stderr'].to_s.strip.length>0
       response['signal'] = result['exit_code']
       response
     end
