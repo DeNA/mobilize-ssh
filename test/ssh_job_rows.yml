@@ -3,23 +3,23 @@
   active: true
   trigger: once
   status: ""
-  stage1: 'ssh.run node:"test_node", cmd:"ruby code.rb", user:"root", sources:["code.rb", "code.sh"]'
-  stage2: 'gsheet.write source:"stage1", target:"test_ssh_1.out"'
+  stage1: ssh.run node:"test_node", cmd:"ruby code.rb", user:"root", sources:["code.rb", "code.sh"]
+  stage2: gsheet.write source:"stage1", target:"test_ssh_1.out"
 - name: test_ssh_2
   active: true
   trigger: "after test_ssh_1"
   status: ""
-  stage1: 'ssh.run cmd:"sh code2.sh", user:"root", sources:["code2.sh","test_node/var/log/syslog"]'
-  stage2: 'gsheet.write source:"stage1", target:"test_ssh_2.out"'
+  stage1: ssh.run cmd:"sh code2.sh", user:"root", sources:["code2.sh","test_node/var/log/syslog"], params:{file:"syslog"}
+  stage2: gsheet.write source:"stage1", target:"test_ssh_2.out"
 - name: test_ssh_3
   active: true
   trigger: "after test_ssh_2"
   status: ""
-  stage1: 'ssh.run cmd:"echo @test_param", params:{test_param: "test param successful"}'
-  stage2: 'gsheet.write source:"stage1", target:"test_ssh_3.out"'
+  stage1: ssh.run cmd:"echo '@test_param'", params:{test_param:"test param successful"}
+  stage2: gsheet.write source:"stage1", target:"test_ssh_3.out"
 - name: test_ssh_4
   active: true
   trigger: "after test_ssh_3"
   status: ""
-  stage1: 'ssh.run node:"test_node", user:root, sources:["git://DeNA/mobilize-ssh/test/code.rb","git://DeNA/mobilize-ssh/test/code.sh"], cmd:"ruby code.rb"'
-  stage2: 'gsheet.write source:stage1, target:"test_ssh_4.out"'
+  stage1: ssh.run node:"test_node", user:root, sources:["git://DeNA/mobilize-ssh/test/code.rb","git://DeNA/mobilize-ssh/test/code.sh"], cmd:"ruby code.rb"
+  stage2: gsheet.write source:stage1, target:"test_ssh_4.out"

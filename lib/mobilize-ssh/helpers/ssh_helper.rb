@@ -33,13 +33,5 @@ module Mobilize
       host_domain_name = self.host(node)['name'].split(".")[-2..-1].join(".")
       return true if self.gateway(node) and Socket.domain_name != host_domain_name
     end
-
-    def self.default_params
-      time = Time.now.utc
-      {
-       '$utc_date'=>time.strftime("%Y-%m-%d"),
-       '$utc_time'=>time.strftime("%H:%M"),
-      }
-    end
   end
 end

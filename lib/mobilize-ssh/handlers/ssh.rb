@@ -75,6 +75,7 @@ module Mobilize
       comm_dir = Dir.mktmpdir
       #replace any params in the file_hash and command
       params.each do |k,v|
+        command.gsub!("@#{k}",v)
         file_hash.each do |name,data|
           data.gsub!("@#{k}",v)
         end

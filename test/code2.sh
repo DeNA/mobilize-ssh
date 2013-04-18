@@ -1,1 +1,1 @@
-tail syslog
+tail @file
