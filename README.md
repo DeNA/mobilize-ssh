@@ -215,14 +215,21 @@ Start
 ### Create Job
 
 * For mobilize-ssh, the following task is available:
-  * ssh.run `node: <node_alias>, cmd: <command>, user: user, sources:[*<source_paths>]`, which reads sources, copies them to a temporary folder on the selected node, and runs the command inside that folder. 
-  * user, sources, and node are optional; cmd is required. 
+  * ssh.run `node: <node_alias>, cmd: <command>, user: user, sources:[*<source_paths>], params:[{<key,value pairs>}]`, which reads sources, copies them to a temporary folder on the selected node, and runs the command inside that folder. 
+  * user, sources, node, and params are optional; cmd is required. 
   * specifying user will cause the command to be prefixed with sudo su <user> -c. 
     * non-google sources will also be read as the specified user.
   * git sources can be specified with syntax `git://<domain>/<repo_owner>/<repo_name>/<file_path>`. 
     * Accessing private repos requires that you add the Mobilize public key to the repository as a deploy key.
       * there is no user-level access control for git repositories at this time.
     * domain defaults to the first one listed, if not included.
+  * params are also optional for all of the below. They replace tokens in sources and the command.
+    * params are passed as a YML or JSON, as in:
+      * `ssh.run source:<source_path>, params:{'date':'2013-03-01', 'unit':'widgets'}`
+        * this example replaces all the keys, preceded by '@' in all source hqls with the value.
+          * The preceding '@' is used to keep from replacing instances
+            of "date" and "unit" in the command/source file; you should have `@date` and `@unit` in your actual HQL 
+            if you'd like to replace those tokens.
   * not specifying node will cause the command to be run on the default node.
   * ssh sources can be specified with syntax
 `ssh://<node><file_full_path>`. If node is omitted, default node will be used.
