@@ -73,16 +73,13 @@ module Mobilize
       #make sure the dir for this command is clear
       comm_md5 = [user,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
       comm_dir = Dir.mktmpdir
-      #add in default methods to the params
-      params.merge(Ssh.default_params)
       #replace any params in the file_hash and command
       params.each do |k,v|
-        command.gsub!(k,v)
         file_hash.each do |name,data|
-          data.gsub!(k,v)
+          data.gsub!("@#{k}",v)
         end
       end
-      #populate comm dir with any files
+     #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
       #make sure user starts in rem_dir
       rem_dir = "#{comm_md5}/"

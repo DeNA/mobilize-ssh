@@ -15,7 +15,7 @@
   active: true
   trigger: "after test_ssh_2"
   status: ""
-  stage1: 'ssh.run cmd:"whoami"'
+  stage1: 'ssh.run cmd:"echo @test_param", params:{test_param: "test param successful"}'
   stage2: 'gsheet.write source:"stage1", target:"test_ssh_3.out"'
 - name: test_ssh_4
   active: true
