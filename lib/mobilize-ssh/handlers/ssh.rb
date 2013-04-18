@@ -67,14 +67,15 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,user,file_hash={},params={})
-      default_user = Ssh.host(node)['user']
+    def Ssh.run(node,command,user_name,file_hash={},run_params=nil)
+      default_user_name = Ssh.host(node)['user']
       file_hash ||= {}
+      run_params ||={}
       #make sure the dir for this command is clear
-      comm_md5 = [user,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
+      comm_md5 = [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
       comm_dir = Dir.mktmpdir
       #replace any params in the file_hash and command
-      params.each do |k,v|
+      run_params.each do |k,v|
         command.gsub!("@#{k}",v)
         file_hash.each do |name,data|
           data.gsub!("@#{k}",v)
@@ -101,9 +102,9 @@ module Mobilize
       Ssh.write(node,command,cmd_path)
       full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
-      if user != default_user
+      if user_name != default_user_name
         #make sure user owns the folder and all files
-        fire_cmd = %{sudo chown -R #{user} #{rem_dir}; sudo su #{user} -c "#{full_cmd}"}
+        fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
         rm_cmd = %{sudo rm -rf #{rem_dir}}
       else
         fire_cmd = full_cmd
@@ -214,7 +215,8 @@ module Mobilize
       user_name = Ssh.user_name_by_stage_path(stage_path)
       file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
       Gdrive.unslot_worker_by_path(stage_path)
-      result = Ssh.run(node,command,user_name,file_hash)
+      run_params = params['params']
+      result = Ssh.run(node,command,user_name,file_hash,run_params)
       #use Gridfs to cache result
       response = {}
       response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)
