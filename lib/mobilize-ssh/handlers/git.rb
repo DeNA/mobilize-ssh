@@ -16,6 +16,14 @@ module Mobilize
       Git.domains.first
     end
 
+    def Git.repo_key(domain,repo)
+      begin
+        Git.config['domains'][domain]['repo_keys'][repo]
+      rescue
+        nil #no key for public repos
+      end
+    end
+
     # converts a source path or target path to a dst in the context of handler and stage
     def Git.path_to_dst(path,stage_path,gdrive_slot)
       red_path = path.split("://").last
@@ -74,7 +82,8 @@ module Mobilize
     #specified folder
     def Git.pull(domain,repo,revision,run_dir=Dir.mktmpdir)
       domain_properties = Git.config['domains'][domain]
-      user,host,key = ['user','host','key'].map{|k| domain_properties[k]}
+      user,host= ['user','host'].map{|k| domain_properties[k]}
+      key = Git.repo_key(domain,repo)
       #create folder for repo and command
       run_file_path = run_dir + "/cmd.sh"
       #put together command

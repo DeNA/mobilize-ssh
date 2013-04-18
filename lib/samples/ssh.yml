@@ -1,6 +1,5 @@
 ---
 development:
-  tmp_file_dir: tmp/file/
   nodes:
     dev_node:
       sudoers: 
@@ -17,7 +16,6 @@ development:
         port: 22 
         user: gateway_user
 test:
-  tmp_file_dir: tmp/file/
   nodes:
     test_node:
       sudoers: 
@@ -34,7 +32,6 @@ test:
         port: 22 
         user: gateway_user
 production:
-  tmp_file_dir: tmp/file/
   nodes:
     prod_node:
       sudoers: 

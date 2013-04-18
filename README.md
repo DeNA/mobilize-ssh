@@ -169,9 +169,13 @@ The Git configuration consists of:
 
 Each domain has: 
 * a host;
-* a key (optional); If you don't need an ssh key to access the repo, remove that row from the configuration file.
-  * this is the relative path of the ssh key required to access the repository.
 * a user, which is the user used for the git clone command.
+* a set of repo keys (optional) which correspond to "deploy keys" on
+github.  Each repo must have its own ssh key, and the public key must be
+stored in the repo.
+  * if your repo doesn't need an ssh key to work, this is not necessary
+to add.
+
 
 Sample git.yml:
 
@@ -180,27 +184,33 @@ Sample git.yml:
 development:
   domains:
     private:
-      host: github.<domain>.com
-      key: config/mobilize/ssh_private.key
+      host: github.private.com
       user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
     public:
       host: github.com
       user: git
 test:
   domains:
-    private:
-      host: github.<domain>.com
-      key: config/mobilize/ssh_private.key
-      user: git
     public:
       host: github.com
       user: git
+    private:
+      host: github.private.com
+      user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
 production:
   domains:
     private:
-      host: github.<domain>.com
-      key: config/mobilize/ssh_private.key
+      host: github.private.com
       user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
     public:
       host: github.com
       user: git

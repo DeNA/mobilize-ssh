@@ -1,0 +1,34 @@
+---
+development:
+  domains:
+    private:
+      host: github.private.com
+      user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
+    public:
+      host: github.com
+      user: git
+test:
+  domains:
+    public:
+      host: github.com
+      user: git
+    private:
+      host: github.private.com
+      user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
+production:
+  domains:
+    private:
+      host: github.private.com
+      user: git
+      repo_keys:
+        "repo_path_1": 'local/path/to/key1'
+        "repo_path_2": 'local/path/to/key1'
+    public:
+      host: github.com
+      user: git
