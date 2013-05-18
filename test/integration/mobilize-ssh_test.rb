@@ -1,22 +1,16 @@
 require 'test_helper'
-
+require "#{Mobilize::Base.home_dir}/test/test_helper"
 describe "Mobilize" do
-
-  def before
-    puts 'nothing before'
-  end
-
   # enqueues 4 workers on Resque
   it "runs integration test" do
 
     puts "restart workers"
     Mobilize::Jobtracker.restart_workers!
 
-    gdrive_slot = Mobilize::Gdrive.owner_email
-    puts "create user 'mobilize'"
-    user_name = gdrive_slot.split("@").first
-    u = Mobilize::User.where(:name=>user_name).first
+    u = TestHelper.owner_user
     r = u.runner
+    user_name = u.name
+    gdrive_slot = u.email
 
     rb_code_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.rb",gdrive_slot)
     sh_code_sheet = Mobilize::Gsheet.find_by_path("#{r.path.split("/")[0..-2].join("/")}/code.sh",gdrive_slot)
