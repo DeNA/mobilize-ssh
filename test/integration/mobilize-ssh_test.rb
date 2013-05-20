@@ -1,6 +1,4 @@
 require 'test_helper'
-require "#{Mobilize::Base.home_dir}/test/test_helper"
-require 'test_helper'
 describe "Mobilize" do
   # enqueues 4 workers on Resque
   it "runs integration test" do

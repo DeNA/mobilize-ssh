@@ -9,6 +9,9 @@ require "mobilize-ssh/extensions/socket"
 
 module Mobilize
   module Ssh
+    def Ssh.home_dir
+      File.expand_path('..',File.dirname(__FILE__))
+    end
   end
 end
 require "mobilize-ssh/handlers/ssh"
