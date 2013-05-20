@@ -36,7 +36,7 @@ describe "Mobilize" do
 
     puts "jobtracker posted data to test sheets"
     ['ssh1.out','ssh2.out','ssh4.out'].each do |out_name|
-      url = "gsheet://#{r.title}/#{sheet_name}"
+      url = "gsheet://#{r.title}/#{out_name}"
       assert TestHelper.check_output(url, 'min_length' => 100) == true
     end
 
