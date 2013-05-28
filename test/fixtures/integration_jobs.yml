@@ -21,5 +21,5 @@
   active: true
   trigger: "after ssh3"
   status: ""
-  stage1: ssh.run node:"test_node", user:root, sources:["git://DeNA/mobilize-ssh/test/code.rb","git://DeNA/mobilize-ssh/test/code.sh"], cmd:"ruby code.rb"
+  stage1: ssh.run node:"test_node", user:root, sources:["git://DeNA/mobilize-ssh/test/fixtures/code.rb","git://DeNA/mobilize-ssh/test/fixtures/code.sh"], cmd:"ruby code.rb"
   stage2: gsheet.write source:stage1, target:"ssh4.out"
