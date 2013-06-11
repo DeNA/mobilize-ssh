@@ -28,6 +28,10 @@ module Mobilize
       self.nodes.first
     end
 
+    def self.node_owner(node)
+      self.host(node)['user']
+    end
+
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
     def self.needs_gateway?(node)
       host_domain_name = self.host(node)['name'].split(".")[-2..-1].join(".")

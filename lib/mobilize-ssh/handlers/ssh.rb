@@ -67,12 +67,16 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,user_name,file_hash={},run_params=nil)
+    def Ssh.run(node,command,user_name,stage_path=nil,file_hash={},run_params=nil)
       default_user_name = Ssh.host(node)['user']
       file_hash ||= {}
       run_params ||={}
-      #make sure the dir for this command is clear
-      comm_md5 = [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
+      #make sure the dir for this command is unique
+      if stage_path
+        comm_unique = stage_path.downcase.alphanunderscore
+      else
+        comm_unique = [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
+      end
       comm_dir = Dir.mktmpdir
       #replace any params in the file_hash and command
       run_params.each do |k,v|
@@ -84,20 +88,16 @@ module Mobilize
      #populate comm dir with any files
       Ssh.pop_comm_dir(comm_dir,file_hash)
       #make sure user starts in rem_dir
-      rem_dir = "#{comm_md5}/"
-      #make sure the rem_dir is gone
-      Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
+      rem_dir = "/home/#{user_name}/mobilize/#{comm_unique}/"
+      #refresh rem_dir
+      Ssh.fire!(node,"sudo rm -rf #{rem_dir}; sudo mkdir -p #{rem_dir}")
       if File.exists?(comm_dir)
         Ssh.scp(node,comm_dir,rem_dir)
         #make sure comm_dir is removed
         FileUtils.rm_r(comm_dir,:force=>true)
-      else
-        #create folder
-        mkdir_command = "mkdir #{rem_dir}"
-        Ssh.fire!(node,mkdir_command)
       end
       #create cmd_file in rem_folder
-      cmd_file = "#{comm_md5}.sh"
+      cmd_file = "#{comm_unique}.sh"
       cmd_path = "#{rem_dir}#{cmd_file}"
       Ssh.write(node,command,cmd_path)
       full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
@@ -105,14 +105,14 @@ module Mobilize
       if user_name != default_user_name
         #make sure user owns the folder and all files
         fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
-        rm_cmd = %{sudo rm -rf #{rem_dir}}
+        #rm_cmd = %{sudo rm -rf #{rem_dir}}
       else
         fire_cmd = full_cmd
-        rm_cmd = "rm -rf #{rem_dir}"
+        #rm_cmd = "rm -rf #{rem_dir}"
       end
       result = Ssh.fire!(node,fire_cmd)
-      Ssh.fire!(node,rm_cmd)
-      result
+      #Ssh.fire!(node,rm_cmd)
+      return result
     end
 
     def Ssh.fire!(node,cmd)
@@ -130,6 +130,27 @@ module Mobilize
                    end
                  end
       response
+    end
+
+    def Ssh.add_user(node,user_name,ssh_public_key)
+      #make sure user has been created in the database
+      u = User.where(:name=>user_name).first
+      raise "User not found, create this user with rake mobilize:add_user first" unless u
+      #Be careful, this deletes and recreates the authorized_keys file on the node.
+      ssh_dir = "/home/#{user_name}/.ssh"
+      del_cmd = "sudo deluser #{user_name}"
+      add_cmd = "sudo adduser --force-badname --disabled-password --gecos '' #{user_name} && " +
+      #files need to be owned by owner for this step
+      "sudo mkdir -p #{ssh_dir} && sudo chown -R #{Ssh.node_owner(node)} #{ssh_dir}"
+      Ssh.fire!(node,del_cmd)
+      Ssh.fire!(node,add_cmd)
+      #add public key
+      auth_path = "#{ssh_dir}/authorized_keys"
+      Ssh.write(node,ssh_public_key,auth_path)
+      #change ownership and permissions
+      ch_cmd = "sudo chown -R #{user_name}:#{user_name} #{ssh_dir} && sudo chmod 0700 #{auth_path}"
+      Ssh.fire!(node,ch_cmd)
+      return true
     end
 
     def Ssh.read_by_dataset_path(dst_path,user_name,*args)
@@ -216,7 +237,7 @@ module Mobilize
       file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
       Gdrive.unslot_worker_by_path(stage_path)
       run_params = params['params']
-      result = Ssh.run(node,command,user_name,file_hash,run_params)
+      result = Ssh.run(node,command,user_name,stage_path,file_hash,run_params)
       #use Gridfs to cache result
       response = {}
       response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)
