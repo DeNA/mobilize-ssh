@@ -135,27 +135,6 @@ module Mobilize
       response
     end
 
-    def Ssh.add_user(node,user_name,ssh_public_key)
-      #make sure user has been created in the database
-      u = User.where(:name=>user_name).first
-      raise "User not found, create this user with rake mobilize:add_user first" unless u
-      #Be careful, this deletes and recreates the authorized_keys file on the node.
-      ssh_dir = "/home/#{user_name}/.ssh"
-      del_cmd = "sudo deluser #{user_name}"
-      add_cmd = "sudo adduser --force-badname --disabled-password --gecos '' #{user_name} && " +
-      #files need to be owned by owner for this step
-      "sudo mkdir -p #{ssh_dir} && sudo chown -R #{Ssh.node_owner(node)} #{ssh_dir}"
-      Ssh.fire!(node,del_cmd)
-      Ssh.fire!(node,add_cmd)
-      #add public key
-      auth_path = "#{ssh_dir}/authorized_keys"
-      Ssh.write(node,ssh_public_key,auth_path)
-      #change ownership and permissions
-      ch_cmd = "sudo chown -R #{user_name}:#{user_name} #{ssh_dir} && sudo chmod 0700 #{auth_path}"
-      Ssh.fire!(node,ch_cmd)
-      return true
-    end
-
     def Ssh.read_by_dataset_path(dst_path,user_name,*args)
       #expects node as first part of path
       node,path = dst_path.split("/").ie{|pa| [pa.first,pa[1..-1].join("/")]}
@@ -237,6 +216,10 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       user_name = Ssh.user_name_by_stage_path(stage_path)
+      #do not allow server commands from non-sudoers for the special server node
+      if node=='server' and !Ssh.sudoers(node).include?(user_name)
+        raise "You do not have permission to run commands on the mobilize server"
+      end
       file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
       Gdrive.unslot_worker_by_path(stage_path)
       run_params = params['params']

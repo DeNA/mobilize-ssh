@@ -1,12 +1,5 @@
 require 'yaml'
 namespace :mobilize do
-  desc "create a user account on a node"
-  task :add_ssh_user, :node, :user_name, :public_key_path, :env do |t,args|
-    ENV['MOBILIZE_ENV']=args.env
-    require 'mobilize-ssh'
-    public_key = File.read(args.public_key_path)
-    Mobilize::Ssh.add_user(args.node,args.user_name,public_key)
-  end
   desc "Set up config and log folders and files"
   task :setup_ssh do
     sample_dir = File.dirname(__FILE__) + '/../samples/'
