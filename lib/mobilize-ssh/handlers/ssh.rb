@@ -2,7 +2,8 @@ module Mobilize
   module Ssh
     #adds convenience methods
     require "#{File.dirname(__FILE__)}/../helpers/ssh_helper"
-    def Ssh.pop_loc_dir(loc_dir,file_hash)
+    def Ssh.pop_loc_dir(unique_dir,file_hash)
+      loc_dir = "/tmp/#{unique_dir}"
       `rm -rf #{loc_dir} && mkdir -p #{loc_dir}`
       file_hash.each do |fname,fdata|
         fpath = "#{loc_dir}/#{fname}"
@@ -10,29 +11,32 @@ module Mobilize
         mode = fname.ends_with?(".gz") ? "wb" : "w"
         File.open(fpath,mode) {|f| f.print(fdata)}
       end
-      return true if file_hash.keys.length>0
+      return loc_dir if file_hash.keys.length>0
     end
 
-    def Ssh.pop_rem_dir(node,user_name,loc_dir,rem_dir,command,file_hash)
-      Ssh.pop_loc_dir(loc_dir,file_hash)
-      #refresh rem_dir
-      Ssh.fire!(node,"sudo rm -rf #{rem_dir}; sudo mkdir -p #{rem_dir}; sudo chown -R #{Ssh.node_owner(node)} #{rem_dir}")
-      if File.exists?(loc_dir)
-        Ssh.scp(node,loc_dir,"#{rem_dir}/..")
+    def Ssh.deploy(node,user_name,unique_dir,command,file_hash)
+      loc_dir = Ssh.pop_loc_dir(unique_dir,file_hash)
+      Ssh.fire!(node,"rm -rf #{unique_dir} && mkdir -p #{unique_dir} && chown -R #{Ssh.node_owner(node)} #{unique_dir}")
+      if loc_dir
+        Ssh.scp(node,loc_dir,".")
         #make sure loc_dir is removed
         FileUtils.rm_r(loc_dir,:force=>true)
       end
-      #create cmd_file in rem_folder
-      cmd_path = "#{rem_dir}/cmd.sh"
+      #create cmd_file in unique_dir
+      cmd_path = "#{unique_dir}/cmd.sh"
       Ssh.write(node,command,cmd_path)
-      full_cmd = "(cd #{rem_dir} && sh #{cmd_path})"
+      #move folder to user's home, change ownership
+      user_dir = "/home/#{user_name}/"
+      mobilize_dir = "#{user_dir}mobilize/"
+      deploy_dir = "#{mobilize_dir}#{unique_dir}/"
+      deploy_cmd_path = "#{deploy_dir}/cmd.sh"
+      deploy_cmd = "sudo mkdir -p #{mobilize_dir} && " +
+                   "sudo mv #{unique_dir} #{mobilize_dir} && " +
+                   "sudo chown -R #{user_name} #{user_dir}"
+      Ssh.fire!(node,deploy_cmd)
+      full_cmd = "(cd #{deploy_dir} && sh #{deploy_cmd_path})"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
-      if user_name != Ssh.node_owner(node)
-        #make sure user owns the folder and all files
-        fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
-      else
-        fire_cmd = full_cmd
-      end
+      fire_cmd = %{sudo su #{user_name} -c "#{full_cmd}"}
       return fire_cmd
     end
 
@@ -106,15 +110,8 @@ module Mobilize
                    else
                      [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
                    end
-      #populate loc_dir with any files
-      loc_dir = "/tmp/#{unique_dir}"
-      rem_dir = "/home/#{user_name}/mobilize/#{unique_dir}"
-      fire_cmd = Ssh.pop_rem_dir(node, user_name, loc_dir, rem_dir, command, file_hash)
+      fire_cmd = Ssh.deploy(node, user_name, unique_dir, command, file_hash)
       result = Ssh.fire!(node,fire_cmd)
-      unless stage_path
-        rm_cmd = %{sudo rm -rf #{rem_dir}}
-        Ssh.fire!(node,rm_cmd)
-      end
       return result
     end
 
@@ -172,7 +169,7 @@ module Mobilize
       node = Ssh.default_node unless Ssh.nodes.include?(node)
       if user_name and !Ssh.sudoers(node).include?(u.name)
         raise "#{u.name} does not have su permissions for this node"
-      elsif user_name.nil? and Ssh.su_all_users(node)
+      elsif user_name.nil?
         user_name = u.name
       end
       return user_name

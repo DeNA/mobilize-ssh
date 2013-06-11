@@ -16,10 +16,6 @@ module Mobilize
       self.config['nodes'][node]['sudoers']
     end
 
-    def self.su_all_users(node)
-      self.config['nodes'][node]['su_all_users']
-    end
-
     def self.nodes
       self.config['nodes'].keys
     end
