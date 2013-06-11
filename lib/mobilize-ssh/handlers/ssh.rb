@@ -2,15 +2,38 @@ module Mobilize
   module Ssh
     #adds convenience methods
     require "#{File.dirname(__FILE__)}/../helpers/ssh_helper"
-    def Ssh.pop_comm_dir(comm_dir,file_hash)
+    def Ssh.pop_loc_dir(loc_dir,file_hash)
+      `rm -rf #{loc_dir} && mkdir -p #{loc_dir}`
       file_hash.each do |fname,fdata|
-        fpath = "#{comm_dir}/#{fname}"
+        fpath = "#{loc_dir}/#{fname}"
         #for now, only gz is binary
-        binary = fname.ends_with?(".gz") ? true : false
-        #read data from cache, put it in a tmp_file
-        Ssh.tmp_file(fdata,binary,fpath)
+        mode = fname.ends_with?(".gz") ? "wb" : "w"
+        File.open(fpath,mode) {|f| f.print(fdata)}
       end
       return true if file_hash.keys.length>0
+    end
+
+    def Ssh.pop_rem_dir(node,user_name,loc_dir,rem_dir,command,file_hash)
+      Ssh.pop_loc_dir(loc_dir,file_hash)
+      #refresh rem_dir
+      Ssh.fire!(node,"sudo rm -rf #{rem_dir}; sudo mkdir -p #{rem_dir}; sudo chown -R #{Ssh.node_owner(node)} #{rem_dir}")
+      if File.exists?(loc_dir)
+        Ssh.scp(node,loc_dir,"#{rem_dir}/..")
+        #make sure loc_dir is removed
+        FileUtils.rm_r(loc_dir,:force=>true)
+      end
+      #create cmd_file in rem_folder
+      cmd_path = "#{rem_dir}/cmd.sh"
+      Ssh.write(node,command,cmd_path)
+      full_cmd = "(cd #{rem_dir} && sh #{cmd_path})"
+      #fire_cmd runs sh on cmd_path, optionally with sudo su
+      if user_name != Ssh.node_owner(node)
+        #make sure user owns the folder and all files
+        fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
+      else
+        fire_cmd = full_cmd
+      end
+      return fire_cmd
     end
 
     # converts a source path or target path to a dst in the context of handler and stage
@@ -68,16 +91,8 @@ module Mobilize
     end
 
     def Ssh.run(node,command,user_name,stage_path=nil,file_hash={},run_params=nil)
-      default_user_name = Ssh.host(node)['user']
       file_hash ||= {}
       run_params ||={}
-      #make sure the dir for this command is unique
-      if stage_path
-        comm_unique = stage_path.downcase.alphanunderscore
-      else
-        comm_unique = [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
-      end
-      comm_dir = Dir.mktmpdir
       #replace any params in the file_hash and command
       run_params.each do |k,v|
         command.gsub!("@#{k}",v)
@@ -85,33 +100,21 @@ module Mobilize
           data.gsub!("@#{k}",v)
         end
       end
-     #populate comm dir with any files
-      Ssh.pop_comm_dir(comm_dir,file_hash)
-      #make sure user starts in rem_dir
-      rem_dir = "/home/#{user_name}/mobilize/#{comm_unique}/"
-      #refresh rem_dir
-      Ssh.fire!(node,"sudo rm -rf #{rem_dir}; sudo mkdir -p #{rem_dir}")
-      if File.exists?(comm_dir)
-        Ssh.scp(node,comm_dir,rem_dir)
-        #make sure comm_dir is removed
-        FileUtils.rm_r(comm_dir,:force=>true)
-      end
-      #create cmd_file in rem_folder
-      cmd_file = "#{comm_unique}.sh"
-      cmd_path = "#{rem_dir}#{cmd_file}"
-      Ssh.write(node,command,cmd_path)
-      full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
-      #fire_cmd runs sh on cmd_path, optionally with sudo su
-      if user_name != default_user_name
-        #make sure user owns the folder and all files
-        fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
-        #rm_cmd = %{sudo rm -rf #{rem_dir}}
-      else
-        fire_cmd = full_cmd
-        #rm_cmd = "rm -rf #{rem_dir}"
-      end
+      #make sure the dir for this command is unique
+      unique_dir = if stage_path
+                     stage_path.downcase.alphanunderscore
+                   else
+                     [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
+                   end
+      #populate loc_dir with any files
+      loc_dir = "/tmp/#{unique_dir}"
+      rem_dir = "/home/#{user_name}/mobilize/#{unique_dir}"
+      fire_cmd = Ssh.pop_rem_dir(node, user_name, loc_dir, rem_dir, command, file_hash)
       result = Ssh.fire!(node,fire_cmd)
-      #Ssh.fire!(node,rm_cmd)
+      unless stage_path
+        rm_cmd = %{sudo rm -rf #{rem_dir}}
+        Ssh.fire!(node,rm_cmd)
+      end
       return result
     end
 
