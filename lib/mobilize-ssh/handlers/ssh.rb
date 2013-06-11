@@ -112,6 +112,11 @@ module Mobilize
                    end
       fire_cmd = Ssh.deploy(node, user_name, unique_dir, command, file_hash)
       result = Ssh.fire!(node,fire_cmd)
+      #clear out the md5 folders
+      unless stage_path
+        rm_cmd = "sudo rm -rf /home/#{user_name}/mobilize/#{unique_dir}"
+        Ssh.fire!(node,rm_cmd)
+      end
       return result
     end
 
