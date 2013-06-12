@@ -29,10 +29,11 @@ module Mobilize
       user_dir = "/home/#{user_name}/"
       mobilize_dir = "#{user_dir}mobilize/"
       deploy_dir = "#{mobilize_dir}#{unique_dir}/"
-      deploy_cmd_path = "#{deploy_dir}/cmd.sh"
+      deploy_cmd_path = "#{deploy_dir}cmd.sh"
       deploy_cmd = "sudo mkdir -p #{mobilize_dir} && " +
+                   "sudo rm -rf  #{mobilize_dir}#{unique_dir} && " +
                    "sudo mv #{unique_dir} #{mobilize_dir} && " +
-                   "sudo chown -R #{user_name} #{user_dir}"
+                   "sudo chown -R #{user_name} #{mobilize_dir}"
       Ssh.fire!(node,deploy_cmd)
       full_cmd = "(cd #{deploy_dir} && sh #{deploy_cmd_path})"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
@@ -121,6 +122,7 @@ module Mobilize
     end
 
     def Ssh.fire!(node,cmd)
+      puts "#{Time.now.utc}--Ssh on #{node}: #{cmd}"
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
