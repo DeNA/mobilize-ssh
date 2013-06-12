@@ -28,8 +28,13 @@ module Mobilize
       self.host(node)['user']
     end
 
+    def self.skip_gateway?(node)
+      self.config['nodes'][node]['skip_gateway']
+    end
+
     #determine if current machine is on host domain, needs gateway if one is provided and it is not
     def self.needs_gateway?(node)
+      return false if self.skip_gateway?(node)
       host_domain_name = self.host(node)['name'].split(".")[-2..-1].join(".")
       return true if self.gateway(node) and Socket.domain_name != host_domain_name
     end
