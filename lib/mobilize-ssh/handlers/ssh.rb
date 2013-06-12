@@ -2,8 +2,8 @@ module Mobilize
   module Ssh
     #adds convenience methods
     require "#{File.dirname(__FILE__)}/../helpers/ssh_helper"
-    def Ssh.pop_loc_dir(unique_dir,file_hash)
-      loc_dir = "/tmp/#{unique_dir}"
+    def Ssh.pop_loc_dir(unique_name,file_hash)
+      loc_dir = "/tmp/#{unique_name}"
       `rm -rf #{loc_dir} && mkdir -p #{loc_dir}`
       file_hash.each do |fname,fdata|
         fpath = "#{loc_dir}/#{fname}"
@@ -14,28 +14,29 @@ module Mobilize
       return loc_dir if file_hash.keys.length>0
     end
 
-    def Ssh.deploy(node,user_name,unique_dir,command,file_hash)
-      loc_dir = Ssh.pop_loc_dir(unique_dir,file_hash)
-      Ssh.fire!(node,"rm -rf #{unique_dir} && mkdir -p #{unique_dir} && chown -R #{Ssh.node_owner(node)} #{unique_dir}")
+    def Ssh.deploy(node,user_name,unique_name,command,file_hash)
+      loc_dir = Ssh.pop_loc_dir(unique_name,file_hash)
+      Ssh.fire!(node,"rm -rf #{unique_name} && mkdir -p #{unique_name} && chown -R #{Ssh.node_owner(node)} #{unique_name}")
       if loc_dir
         Ssh.scp(node,loc_dir,".")
         #make sure loc_dir is removed
         FileUtils.rm_r(loc_dir,:force=>true)
       end
-      #create cmd_file in unique_dir
-      cmd_path = "#{unique_dir}/cmd.sh"
+      #create cmd_file in unique_name
+      cmd_path = "#{unique_name}/cmd.sh"
       Ssh.write(node,command,cmd_path)
       #move folder to user's home, change ownership
       user_dir = "/home/#{user_name}/"
       mobilize_dir = "#{user_dir}mobilize/"
-      deploy_dir = "#{mobilize_dir}#{unique_dir}/"
+      deploy_dir = "#{mobilize_dir}#{unique_name}/"
       deploy_cmd_path = "#{deploy_dir}cmd.sh"
       deploy_cmd = "sudo mkdir -p #{mobilize_dir} && " +
-                   "sudo rm -rf  #{mobilize_dir}#{unique_dir} && " +
-                   "sudo mv #{unique_dir} #{mobilize_dir} && " +
+                   "sudo rm -rf  #{mobilize_dir}#{unique_name} && " +
+                   "sudo mv #{unique_name} #{mobilize_dir} && " +
                    "sudo chown -R #{user_name} #{mobilize_dir}"
       Ssh.fire!(node,deploy_cmd)
-      full_cmd = "(cd #{deploy_dir} && sh #{deploy_cmd_path})"
+      #need to use bash or we get no tee
+      full_cmd = "/bin/bash -l -c '(cd #{deploy_dir} && sh #{deploy_cmd_path} > >(tee stdout) 2> >(tee stderr >&2))'"
       #fire_cmd runs sh on cmd_path, optionally with sudo su
       fire_cmd = %{sudo su #{user_name} -c "#{full_cmd}"}
       return fire_cmd
@@ -106,16 +107,17 @@ module Mobilize
         end
       end
       #make sure the dir for this command is unique
-      unique_dir = if stage_path
+      unique_name = if stage_path
                      stage_path.downcase.alphanunderscore
                    else
                      [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
                    end
-      fire_cmd = Ssh.deploy(node, user_name, unique_dir, command, file_hash)
+      fire_cmd = Ssh.deploy(node, user_name, unique_name, command, file_hash)
       result = Ssh.fire!(node,fire_cmd)
-      #clear out the md5 folders
-      unless stage_path
-        rm_cmd = "sudo rm -rf /home/#{user_name}/mobilize/#{unique_dir}"
+      #clear out the md5 folders and those not requested to keep
+      s = Stage.find_by_path(stage_path) if stage_path
+      unless s and s.params['keep_logs']
+        rm_cmd = "sudo rm -rf /home/#{user_name}/mobilize/#{unique_name}"
         Ssh.fire!(node,rm_cmd)
       end
       return result
