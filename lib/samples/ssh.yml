@@ -23,11 +23,13 @@ test:
       su_all_users: true
       host: 
         name: test-host.com 
+        skip_gateway: true
         key: config/mobilize/ssh_private.key 
         port: 22 
         user: host_user
       gateway: 
         name: test-gateway.com 
+        skip_gateway: true
         key: config/mobilize/ssh_private.key 
         port: 22 
         user: gateway_user

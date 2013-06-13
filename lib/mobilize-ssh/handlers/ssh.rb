@@ -2,15 +2,44 @@ module Mobilize
   module Ssh
     #adds convenience methods
     require "#{File.dirname(__FILE__)}/../helpers/ssh_helper"
-    def Ssh.pop_comm_dir(comm_dir,file_hash)
+    def Ssh.pop_loc_dir(unique_name,file_hash)
+      loc_dir = "/tmp/#{unique_name}"
+      `rm -rf #{loc_dir} && mkdir -p #{loc_dir}`
       file_hash.each do |fname,fdata|
-        fpath = "#{comm_dir}/#{fname}"
+        fpath = "#{loc_dir}/#{fname}"
         #for now, only gz is binary
-        binary = fname.ends_with?(".gz") ? true : false
-        #read data from cache, put it in a tmp_file
-        Ssh.tmp_file(fdata,binary,fpath)
+        mode = fname.ends_with?(".gz") ? "wb" : "w"
+        File.open(fpath,mode) {|f| f.print(fdata)}
       end
-      return true if file_hash.keys.length>0
+      return loc_dir if file_hash.keys.length>0
+    end
+
+    def Ssh.deploy(node,user_name,unique_name,command,file_hash)
+      loc_dir = Ssh.pop_loc_dir(unique_name,file_hash)
+      Ssh.fire!(node,"rm -rf #{unique_name} && mkdir -p #{unique_name} && chown -R #{Ssh.node_owner(node)} #{unique_name}")
+      if loc_dir
+        Ssh.scp(node,loc_dir,".")
+        #make sure loc_dir is removed
+        FileUtils.rm_r(loc_dir,:force=>true)
+      end
+      #create cmd_file in unique_name
+      cmd_path = "#{unique_name}/cmd.sh"
+      Ssh.write(node,command,cmd_path)
+      #move folder to user's home, change ownership
+      user_dir = "/home/#{user_name}/"
+      mobilize_dir = "#{user_dir}mobilize/"
+      deploy_dir = "#{mobilize_dir}#{unique_name}/"
+      deploy_cmd_path = "#{deploy_dir}cmd.sh"
+      deploy_cmd = "sudo mkdir -p #{mobilize_dir} && " +
+                   "sudo rm -rf  #{mobilize_dir}#{unique_name} && " +
+                   "sudo mv #{unique_name} #{mobilize_dir} && " +
+                   "sudo chown -R #{user_name} #{mobilize_dir}"
+      Ssh.fire!(node,deploy_cmd)
+      #need to use bash or we get no tee
+      full_cmd = "/bin/bash -l -c '(cd #{deploy_dir} && sh #{deploy_cmd_path} > >(tee stdout) 2> >(tee stderr >&2))'"
+      #fire_cmd runs sh on cmd_path, optionally with sudo su
+      fire_cmd = %{sudo su #{user_name} -c "#{full_cmd}"}
+      return fire_cmd
     end
 
     # converts a source path or target path to a dst in the context of handler and stage
@@ -67,13 +96,9 @@ module Mobilize
       return true
     end
 
-    def Ssh.run(node,command,user_name,file_hash={},run_params=nil)
-      default_user_name = Ssh.host(node)['user']
+    def Ssh.run(node,command,user_name,stage_path=nil,file_hash={},run_params=nil)
       file_hash ||= {}
       run_params ||={}
-      #make sure the dir for this command is clear
-      comm_md5 = [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
-      comm_dir = Dir.mktmpdir
       #replace any params in the file_hash and command
       run_params.each do |k,v|
         command.gsub!("@#{k}",v)
@@ -81,41 +106,25 @@ module Mobilize
           data.gsub!("@#{k}",v)
         end
       end
-     #populate comm dir with any files
-      Ssh.pop_comm_dir(comm_dir,file_hash)
-      #make sure user starts in rem_dir
-      rem_dir = "#{comm_md5}/"
-      #make sure the rem_dir is gone
-      Ssh.fire!(node,"sudo rm -rf #{rem_dir}")
-      if File.exists?(comm_dir)
-        Ssh.scp(node,comm_dir,rem_dir)
-        #make sure comm_dir is removed
-        FileUtils.rm_r(comm_dir,:force=>true)
-      else
-        #create folder
-        mkdir_command = "mkdir #{rem_dir}"
-        Ssh.fire!(node,mkdir_command)
-      end
-      #create cmd_file in rem_folder
-      cmd_file = "#{comm_md5}.sh"
-      cmd_path = "#{rem_dir}#{cmd_file}"
-      Ssh.write(node,command,cmd_path)
-      full_cmd = "(cd #{rem_dir} && sh #{cmd_file})"
-      #fire_cmd runs sh on cmd_path, optionally with sudo su
-      if user_name != default_user_name
-        #make sure user owns the folder and all files
-        fire_cmd = %{sudo chown -R #{user_name} #{rem_dir}; sudo su #{user_name} -c "#{full_cmd}"}
-        rm_cmd = %{sudo rm -rf #{rem_dir}}
-      else
-        fire_cmd = full_cmd
-        rm_cmd = "rm -rf #{rem_dir}"
-      end
+      #make sure the dir for this command is unique
+      unique_name = if stage_path
+                     stage_path.downcase.alphanunderscore
+                   else
+                     [user_name,node,command,file_hash.keys.to_s,Time.now.to_f.to_s].join.to_md5
+                   end
+      fire_cmd = Ssh.deploy(node, user_name, unique_name, command, file_hash)
       result = Ssh.fire!(node,fire_cmd)
-      Ssh.fire!(node,rm_cmd)
-      result
+      #clear out the md5 folders and those not requested to keep
+      s = Stage.find_by_path(stage_path) if stage_path
+      unless s and s.params['keep_logs']
+        rm_cmd = "sudo rm -rf /home/#{user_name}/mobilize/#{unique_name}"
+        Ssh.fire!(node,rm_cmd)
+      end
+      return result
     end
 
     def Ssh.fire!(node,cmd)
+      puts "#{Time.now.utc}--Ssh on #{node}: #{cmd}"
       name,key,port,user = Ssh.host(node).ie{|h| ['name','key','port','user'].map{|k| h[k]}}
       key_path = "#{Base.root}/#{key}"
       opts = {:port=>(port || 22),:keys=>key_path}
@@ -169,7 +178,7 @@ module Mobilize
       node = Ssh.default_node unless Ssh.nodes.include?(node)
       if user_name and !Ssh.sudoers(node).include?(u.name)
         raise "#{u.name} does not have su permissions for this node"
-      elsif user_name.nil? and Ssh.su_all_users(node)
+      elsif user_name.nil?
         user_name = u.name
       end
       return user_name
@@ -213,10 +222,14 @@ module Mobilize
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       user_name = Ssh.user_name_by_stage_path(stage_path)
+      #do not allow server commands from non-sudoers for the special server node
+      if node=='server' and !Ssh.sudoers(node).include?(user_name)
+        raise "You do not have permission to run commands on the mobilize server"
+      end
       file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
       Gdrive.unslot_worker_by_path(stage_path)
       run_params = params['params']
-      result = Ssh.run(node,command,user_name,file_hash,run_params)
+      result = Ssh.run(node,command,user_name,stage_path,file_hash,run_params)
       #use Gridfs to cache result
       response = {}
       response['out_url'] = Dataset.write_by_url("gridfs://#{s.path}/out",result['stdout'].to_s,Gdrive.owner_name)
