@@ -116,7 +116,7 @@ module Mobilize
       result = Ssh.fire!(node,fire_cmd)
       #clear out the md5 folders and those not requested to keep
       s = Stage.find_by_path(stage_path) if stage_path
-      unless s and s.params['keep_logs']
+      unless s and s.params['save_logs']
         rm_cmd = "sudo rm -rf /home/#{user_name}/mobilize/#{unique_name}"
         Ssh.fire!(node,rm_cmd)
       end
