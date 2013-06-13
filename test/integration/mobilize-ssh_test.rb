@@ -18,7 +18,7 @@ describe "Mobilize" do
     end
 
     puts "add/update jobs"
-    u.jobs.each{|j| j.delete}
+    u.jobs.each{|j| j.stages.each{|s| s.delete}; j.delete}
     jobs_fixture_name = "integration_jobs"
     jobs_target_url = "gsheet://#{r.title}/jobs"
     TestHelper.write_fixture(jobs_fixture_name, jobs_target_url, 'update')
