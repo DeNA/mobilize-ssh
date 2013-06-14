@@ -33,7 +33,8 @@ module Mobilize
       deploy_cmd = "sudo mkdir -p #{mobilize_dir} && " +
                    "sudo rm -rf  #{mobilize_dir}#{unique_name} && " +
                    "sudo mv #{unique_name} #{mobilize_dir} && " +
-                   "sudo chown -R #{user_name} #{mobilize_dir}"
+                   "sudo chown -R #{user_name} #{mobilize_dir} && " +
+                   "sudo chmod -R 0700 #{user_name} #{mobilize_dir}"
       Ssh.fire!(node,deploy_cmd)
       #need to use bash or we get no tee
       full_cmd = "/bin/bash -l -c '(cd #{deploy_dir} && sh #{deploy_cmd_path} > >(tee stdout) 2> >(tee stderr >&2))'"
@@ -218,12 +219,13 @@ module Mobilize
       #return blank response if there are no slots available
       return nil unless gdrive_slot
       s = Stage.where(:path=>stage_path).first
+      u = s.job.runner.user
       params = s.params
       node, command = [params['node'],params['cmd']]
       node ||= Ssh.default_node
       user_name = Ssh.user_name_by_stage_path(stage_path)
       #do not allow server commands from non-sudoers for the special server node
-      if node=='server' and !Ssh.sudoers(node).include?(user_name)
+      if node=='server' and !Ssh.sudoers(node).include?(u.name)
         raise "You do not have permission to run commands on the mobilize server"
       end
       file_hash = Ssh.file_hash_by_stage_path(stage_path,gdrive_slot)
