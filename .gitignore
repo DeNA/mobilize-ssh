@@ -1,5 +1,6 @@
 .DS_Store
 test/dump.rdb
+spec/dump.rdb
 *.gem
 *.rbc
 .bundle

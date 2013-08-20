@@ -22,4 +22,5 @@ Gem::Specification.new do |gem|
   gem.add_runtime_dependency "net-scp"
   gem.add_runtime_dependency "net-ssh-gateway"
 
+  gem.add_development_dependency 'rspec'
 end
