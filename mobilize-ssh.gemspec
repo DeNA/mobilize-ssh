@@ -6,11 +6,12 @@ require 'mobilize-ssh/version'
 Gem::Specification.new do |gem|
   gem.name          = "mobilize-ssh"
   gem.version       = Mobilize::Ssh::VERSION
-  gem.authors       = ["Cassio Paes-Leme"]
-  gem.email         = ["cpaesleme@dena.com"]
+  gem.authors       = ["Cassio Paes-Leme", "Ryosuke IWANAGA"]
+  gem.email         = ["cpaesleme@dena.com", "riywo.jp@gmail.com"]
+  gem.license       = "Apache License, Version 2.0"
+  gem.homepage      = "http://github.com/DeNA/mobilize-ssh"
   gem.description   = %q{mobilize-ssh allows you to automate ssh commands and files across hosts}
   gem.summary       = %q{extend mobilize-base with the ability to run files across hosts}
-  gem.homepage      = "http://github.com/dena/mobilize-ssh"
 
   gem.files         = `git ls-files`.split($/)
   gem.executables   = gem.files.grep(%r{^bin/}).map{ |f| File.basename(f) }
